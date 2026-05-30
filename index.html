@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mafia de Patos - Negociación Estratégica</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <div id="game-container">
+        
+        <section id="screen-login" class="screen active">
+            <div class="logo-area">
+                <div class="duck-avatar neon-glow">🦆🕶️</div>
+                <h1 class="neon-text">MAFIA DE PATOS</h1>
+                <p class="subtitle">Traición, Confianza y Teoría de Juegos</p>
+            </div>
+            <div class="card">
+                <h3>Únete al Sindicato Clandestino</h3>
+                <div class="form-group">
+                    <label for="player-name">Tu Alias de Mafioso:</label>
+                    <input type="text" id="player-name" placeholder="Ej. Al Patone, Cuak Capone..." maxlength="15">
+                </div>
+                <button id="btn-join" class="btn-primary">Ingresar al Callejón</button>
+                <div id="lobby-status" class="status-text">Esperando conexión...</div>
+                
+                <div id="admin-panel" class="hidden">
+                    <hr>
+                    <h4>Panel del Don (Profesor)</h4>
+                    <p>Jugadores conectados: <span id="player-count">0</span>/30</p>
+                    <button id="btn-start-game" class="btn-danger">Iniciar Hostilidades (Configurar Mafias)</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="screen-assignment" class="screen">
+            <div class="card text-center">
+                <h2 class="neon-text">ASIGNANDO SINDICATOS</h2>
+                <div class="duck-animated">🦆💼🕵️</div>
+                <p>El algoritmo del Don te está ubicando en una familia...</p>
+                <div id="assigned-mafia-card" class="mafia-badge">
+                    <h3 id="assigned-mafia-name">Cargando...</h3>
+                    <p>Tu Rol: Ejecutor del Cuac</p>
+                </div>
+                <div class="form-group mafia-naming-input hidden" id="naming-box">
+                    <label>¡Eres el líder fundador! Elige el nombre de tu Mafia:</label>
+                    <input type="text" id="custom-mafia-name" placeholder="Ej. Los Soprano" maxlength="20">
+                    <button id="btn-save-mafia-name" class="btn-success">Bautizar Familia</button>
+                </div>
+                <p class="small-text">Esperando que todas las familias definan su identidad...</p>
+            </div>
+        </section>
+
+        <section id="screen-dashboard" class="screen">
+            <header class="game-header">
+                <div class="player-info">
+                    <span class="avatar">🦆</span>
+                    <div>
+                        <h4 id="dash-player-name">Patón</h4>
+                        <small id="dash-mafia-name">Cargando Familia...</small>
+                    </div>
+                </div>
+                <div class="timer-box">
+                    <span id="timer-label">RONDA 1/5</span>
+                    <div id="timer-display" class="neon-text-red">03:00</div>
+                </div>
+            </header>
+
+            <div id="event-banner" class="event-banner hidden">
+                <span class="event-icon">🚨</span>
+                <div class="event-details">
+                    <h5 id="event-title">EVENTO ESPECIAL</h5>
+                    <p id="event-desc">Cargando condiciones del mercado...</p>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-icon">💰</span>
+                    <div class="stat-val" id="stat-money">$0</div>
+                    <div class="stat-lbl">Dinero Colectivo</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">⭐</span>
+                    <div class="stat-val" id="stat-rep">100%</div>
+                    <div class="stat-lbl">Reputación</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">👑</span>
+                    <div class="stat-val" id="stat-inf">0</div>
+                    <div class="stat-lbl">Influencia</div>
+                </div>
+            </div>
+
+            <main class="action-area">
+                <div id="panel-voting" class="card">
+                    <h3 class="text-center">💼 Sala de Decisiones Clandestinas</h3>
+                    <p class="text-center small-text text-muted">Debes votar en secreto. Tu mafia ejecutará la acción más votada por sus miembros.</p>
+                    
+                    <div class="target-selector-box" style="margin-bottom: 15px;">
+                        <label for="target-mafia">Seleccionar Mafia Objetivo:</label>
+                        <select id="target-mafia" class="form-control"></select>
+                    </div>
+
+                    <div class="voting-options-grid">
+                        <button class="btn-action" data-action="cooperar">
+                            <span class="act-icon">🤝</span>
+                            <strong>Cooperar</strong>
+                            <span class="act-desc">Ganancias mutuas estables. Sube reputación.</span>
+                        </button>
+                        <button class="btn-action" data-action="traicionar">
+                            <span class="act-icon">🗡️</span>
+                            <strong>Traicionar</strong>
+                            <span class="act-desc">Roba fondos masivos. Destruye reputación.</span>
+                        </button>
+                        <button class="btn-action" data-action="robar">
+                            <span class="act-icon">🥷</span>
+                            <strong>Robar Recursos</strong>
+                            <span class="act-desc">Quita Influencia directa a la mafia objetivo.</span>
+                        </button>
+                        <button class="btn-action" data-action="alianza">
+                            <span class="act-icon">📜</span>
+                            <strong>Pacto Temporal</strong>
+                            <span class="act-desc">Si ambos aceptan, bonificador x2 el próximo turno.</span>
+                        </button>
+                    </div>
+                    <div id="vote-status" class="status-banner" style="margin-top:10px; font-size:13px; text-align:center; color:var(--border-neon);">Aún no has emitido tu voto secreto.</div>
+                </div>
+
+                <div id="panel-waiting-results" class="card hidden text-center">
+                    <div class="spinner" style="margin: 20px auto; border:4px solid rgba(255,255,255,0.1); border-left-color:var(--border-neon); border-radius:50%; width:30px; height:30px; animation: spin 1s linear infinite;"></div>
+                    <h3>Votos Consolidados</h3>
+                    <p>Esperando que las demás mafias cierren sus tratos...</p>
+                    <div class="internal-votes-box" style="margin-top:15px; background:rgba(0,0,0,0.2); padding:10px; border-radius:6px;">
+                        <h4>Votos en tu Familia:</h4>
+                        <ul id="internal-votes-list" style="list-style:none; font-size:13px; text-align:left; margin-top:5px;"></ul>
+                    </div>
+                </div>
+            </main>
+
+            <section class="live-ranking card">
+                <h4>📊 Monitor de la Ciudad (Tiempo Real)</h4>
+                <div class="table-responsive">
+                    <table class="ranking-table">
+                        <thead>
+                            <tr>
+                                <th>Mafia</th>
+                                <th>Dinero</th>
+                                <th>Reputación</th>
+                                <th>Influencia</th>
+                            </tr>
+                        </thead>
+                        <tbody id="live-ranking-body"></tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+
+        <section id="screen-transition" class="screen">
+            <div class="fullscreen-reveal">
+                <div id="transition-title" class="reveal-title">¡TRANSACCIONES EVALUADAS!</div>
+                <div id="transition-graphic" class="reveal-graphic">💥 🦆 💥</div>
+                <div class="card">
+                    <h3>Reporte del Hampa - Ronda <span id="rep-ronda-num">1</span></h3>
+                    <div id="round-narrative-log" class="narrative-log"></div>
+                    <button id="btn-admin-next" class="btn-danger hidden" style="margin-top:15px;">Iniciar Siguiente Ronda (Don)</button>
+                    <p id="player-wait-next" class="text-center text-muted" style="font-size:13px; margin-top:10px;">Esperando que el Don inicie la siguiente ronda...</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="screen-end" class="screen">
+            <div class="card final-card text-center">
+                <h1 class="neon-text-red">FIN DEL IMPERIO</h1>
+                <h2>🏆 GANADOR: <span id="winner-mafia-name" class="neon-text">---</span> 🏆</h2>
+                
+                <div class="podium-grid" id="final-podium" style="display:flex; gap:10px; justify-content:center; margin:15px 0;"></div>
+
+                <div class="badges-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
+                    <div class="honor-badge" style="background:#1a1d30; padding:10px; border-radius:6px;">
+                        <span>😇</span>
+                        <h4>El Más Confiable</h4>
+                        <p id="badge-trust-name" style="color:var(--success); font-weight:bold;">Nadie</p>
+                    </div>
+                    <div class="honor-badge" style="background:#1a1d30; padding:10px; border-radius:6px;">
+                        <span>🐍</span>
+                        <h4>Mayor Traidor</h4>
+                        <p id="badge-traitor-name" style="color:var(--neon-pink); font-weight:bold;">Nadie</p>
+                    </div>
+                </div>
+
+                <div class="strategy-analysis-box text-left">
+                    <h3 class="neon-text">📈 Análisis Estratégico: Teoría de Juegos</h3>
+                    <div class="analysis-content" style="font-size:13px; color:#cbd5e1; line-height:1.4;">
+                        <h4 style="color:var(--neon-yellow); margin-top:8px;">Dilema del Prisionero Repetido</h4>
+                        <p>Cuando dos mafias cooperaban de forma mutua, alcanzaban un <em>Óptimo de Pareto</em>, maximizando el bienestar colectivo. No obstante, el incentivo individual para la defección (traición) generaba ventajas competitivas a corto plazo desestabilizando los acuerdos bilaterales.</p>
+                        <h4 style="color:var(--neon-yellow); margin-top:8px;">Reputación Dinámica</h4>
+                        <p>Las mafias que sufrieron caídas drásticas de Reputación experimentaron un aislamiento comercial sistémico inducido por los algoritmos del juego, demostrando el impacto a largo plazo de las decisiones egoístas en economías cerradas.</p>
+                    </div>
+                </div>
+                <button id="btn-reset-game" class="btn-primary hidden" style="margin-top:15px;">Reiniciar Todo el Sistema</button>
+            </div>
+        </section>
+
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
