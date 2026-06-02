@@ -11,7 +11,10 @@
 <body>
 
     <div id="game-container">
-        
+
+        <!-- ==============================
+             PANTALLA 1: LOGIN / LOBBY
+        ============================== -->
         <section id="screen-login" class="screen active">
             <div class="logo-area">
                 <div class="duck-avatar neon-glow">🦆🕶️</div>
@@ -26,7 +29,7 @@
                 </div>
                 <button id="btn-join" class="btn-primary">Ingresar al Callejón</button>
                 <div id="lobby-status" class="status-text">Esperando conexión...</div>
-                
+
                 <div id="admin-panel" class="hidden">
                     <hr>
                     <h4>Panel del Don (Profesor)</h4>
@@ -36,6 +39,9 @@
             </div>
         </section>
 
+        <!-- ==============================
+             PANTALLA 2: ASIGNACIÓN DE MAFIA
+        ============================== -->
         <section id="screen-assignment" class="screen">
             <div class="card text-center">
                 <h2 class="neon-text">ASIGNANDO SINDICATOS</h2>
@@ -50,10 +56,18 @@
                     <input type="text" id="custom-mafia-name" placeholder="Ej. Los Soprano" maxlength="20">
                     <button id="btn-save-mafia-name" class="btn-success">Bautizar Familia</button>
                 </div>
-                <p class="small-text">Esperando que todas las familias definan su identidad...</p>
+                <p class="small-text" style="margin-top: 12px;">Esperando que todas las familias definan su identidad...</p>
+
+                <!-- Botón visible solo para el profesor (Don) -->
+                <button id="btn-launch-dashboard" class="btn-danger hidden" style="margin-top: 15px;">
+                    ▶ Lanzar Primera Ronda (Don)
+                </button>
             </div>
         </section>
 
+        <!-- ==============================
+             PANTALLA 3: DASHBOARD DE JUEGO
+        ============================== -->
         <section id="screen-dashboard" class="screen">
             <header class="game-header">
                 <div class="player-info">
@@ -99,7 +113,7 @@
                 <div id="panel-voting" class="card">
                     <h3 class="text-center">💼 Sala de Decisiones Clandestinas</h3>
                     <p class="text-center small-text text-muted">Debes votar en secreto. Tu mafia ejecutará la acción más votada por sus miembros.</p>
-                    
+
                     <div class="target-selector-box" style="margin-bottom: 15px;">
                         <label for="target-mafia">Seleccionar Mafia Objetivo:</label>
                         <select id="target-mafia" class="form-control"></select>
@@ -127,7 +141,9 @@
                             <span class="act-desc">Si ambos aceptan, bonificador x2 el próximo turno.</span>
                         </button>
                     </div>
-                    <div id="vote-status" class="status-banner" style="margin-top:10px; font-size:13px; text-align:center; color:var(--border-neon);">Aún no has emitido tu voto secreto.</div>
+                    <div id="vote-status" class="status-banner" style="margin-top:10px; font-size:13px; text-align:center; color:var(--border-neon);">
+                        Aún no has emitido tu voto secreto.
+                    </div>
                 </div>
 
                 <div id="panel-waiting-results" class="card hidden text-center">
@@ -159,6 +175,9 @@
             </section>
         </section>
 
+        <!-- ==============================
+             PANTALLA 4: TRANSICIÓN / REPORTE
+        ============================== -->
         <section id="screen-transition" class="screen">
             <div class="fullscreen-reveal">
                 <div id="transition-title" class="reveal-title">¡TRANSACCIONES EVALUADAS!</div>
@@ -166,17 +185,24 @@
                 <div class="card">
                     <h3>Reporte del Hampa - Ronda <span id="rep-ronda-num">1</span></h3>
                     <div id="round-narrative-log" class="narrative-log"></div>
-                    <button id="btn-admin-next" class="btn-danger hidden" style="margin-top:15px;">Iniciar Siguiente Ronda (Don)</button>
-                    <p id="player-wait-next" class="text-center text-muted" style="font-size:13px; margin-top:10px;">Esperando que el Don inicie la siguiente ronda...</p>
+                    <button id="btn-admin-next" class="btn-danger hidden" style="margin-top:15px;">
+                        Iniciar Siguiente Ronda (Don)
+                    </button>
+                    <p id="player-wait-next" class="text-center text-muted" style="font-size:13px; margin-top:10px;">
+                        Esperando que el Don inicie la siguiente ronda...
+                    </p>
                 </div>
             </div>
         </section>
 
+        <!-- ==============================
+             PANTALLA 5: FIN DEL JUEGO
+        ============================== -->
         <section id="screen-end" class="screen">
             <div class="card final-card text-center">
                 <h1 class="neon-text-red">FIN DEL IMPERIO</h1>
                 <h2>🏆 GANADOR: <span id="winner-mafia-name" class="neon-text">---</span> 🏆</h2>
-                
+
                 <div class="podium-grid" id="final-podium" style="display:flex; gap:10px; justify-content:center; margin:15px 0;"></div>
 
                 <div class="badges-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
@@ -201,12 +227,14 @@
                         <p>Las mafias que sufrieron caídas drásticas de Reputación experimentaron un aislamiento comercial sistémico inducido por los algoritmos del juego, demostrando el impacto a largo plazo de las decisiones egoístas en economías cerradas.</p>
                     </div>
                 </div>
-                <button id="btn-reset-game" class="btn-primary hidden" style="margin-top:15px;">Reiniciar Todo el Sistema</button>
+                <button id="btn-reset-game" class="btn-primary hidden" style="margin-top:15px;">
+                    Reiniciar Todo el Sistema
+                </button>
             </div>
         </section>
 
     </div>
-    
+
     <script src="app.js"></script>
 </body>
 </html>
