@@ -1,4 +1,6 @@
-/* PALETA DE COLORES NEÓN & OSCUROS */
+/* ==========================================
+   PALETA DE COLORES
+========================================== */
 :root {
     --bg-main: #0a0b10;
     --bg-card: #141622;
@@ -22,62 +24,50 @@ body {
     color: var(--text-light);
     display: flex;
     justify-content: center;
-    align-items: center;
     min-height: 100vh;
     overflow-x: hidden;
 }
 
 #game-container {
     width: 100%;
-    max-width: 500px; /* Optimización Mobile First */
+    max-width: 500px;
     min-height: 100vh;
     padding: 15px;
-    position: relative;
 }
 
-/* SISTEMA DE PANTALLAS */
-.screen {
-    display: none;
-    animation: fadeIn 0.4s ease-in-out forwards;
-}
+/* ==========================================
+   PANTALLAS
+========================================== */
+.screen { display: none; animation: fadeIn 0.4s ease-in-out forwards; }
+.screen.active { display: block; }
 
-.screen.active {
-    display: block;
-}
-
-/* COMPONENTES VISUALES */
+/* ==========================================
+   CARD BASE
+========================================== */
 .card {
     background: var(--bg-card);
     border: 1px solid rgba(0, 255, 204, 0.15);
     border-radius: 12px;
     padding: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
 .text-center { text-align: center; }
-.text-left { text-align: left; }
-.hidden { display: none !important; }
+.text-left   { text-align: left; }
+.hidden      { display: none !important; }
 
-/* EFECTOS NEÓN */
-.neon-text {
-    color: #fff;
-    text-shadow: 0 0 7px var(--border-neon), 0 0 10px var(--border-neon), 0 0 21px var(--border-neon);
-}
+/* ==========================================
+   EFECTOS NEÓN
+========================================== */
+.neon-text     { color: #fff; text-shadow: 0 0 7px var(--border-neon), 0 0 10px var(--border-neon), 0 0 21px var(--border-neon); }
+.neon-text-red { color: #fff; text-shadow: 0 0 7px var(--neon-pink), 0 0 10px var(--neon-pink); }
+.neon-glow     { filter: drop-shadow(0 0 8px var(--border-neon)); }
 
-.neon-text-red {
-    color: #fff;
-    text-shadow: 0 0 7px var(--neon-pink), 0 0 10px var(--neon-pink);
-}
-
-.neon-glow {
-    filter: drop-shadow(0 0 8px var(--border-neon));
-}
-
-/* ENTRADAS Y BOTONES */
-.form-group {
-    margin-bottom: 15px;
-}
+/* ==========================================
+   FORMULARIO
+========================================== */
+.form-group { margin-bottom: 15px; }
 
 label {
     display: block;
@@ -86,7 +76,9 @@ label {
     color: var(--border-neon);
 }
 
-input[type="text"], select {
+input[type="text"],
+input[type="password"],
+select {
     width: 100%;
     background: #1e2235;
     border: 1px solid var(--text-muted);
@@ -98,33 +90,119 @@ input[type="text"], select {
     transition: 0.3s;
 }
 
-input[type="text"]:focus, select:focus {
+input[type="text"]:focus,
+input[type="password"]:focus,
+select:focus {
     border-color: var(--border-neon);
     box-shadow: 0 0 8px rgba(0, 255, 204, 0.3);
 }
 
+/* Toggle admin */
+.admin-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.admin-toggle-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    accent-color: var(--neon-pink);
+    cursor: pointer;
+}
+
+.admin-toggle-row label {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.pass-error {
+    color: var(--neon-pink);
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* ==========================================
+   BOTONES
+========================================== */
 button {
     width: 100%;
     padding: 14px;
     border: none;
     border-radius: 6px;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-top: 5px;
+    margin-top: 8px;
 }
+
+button:hover { transform: translateY(-2px); filter: brightness(1.15); }
+button:active { transform: translateY(0); }
 
 .btn-primary { background: linear-gradient(135deg, #00ffcc, #00a3ff); color: #000; }
-.btn-danger { background: linear-gradient(135deg, var(--neon-pink), #990033); color: #fff; }
+.btn-danger  { background: linear-gradient(135deg, var(--neon-pink), #990033); color: #fff; }
 .btn-success { background: linear-gradient(135deg, var(--success), #065f46); color: #fff; }
+.btn-force   { background: linear-gradient(135deg, #ff6600, #993d00); color: #fff; }
+.btn-end     { background: linear-gradient(135deg, #cc00ff, #6600aa); color: #fff; }
 
-button:hover {
-    transform: translateY(-2px);
-    filter: brightness(1.2);
+/* ==========================================
+   PANEL DEL DON — admin
+========================================== */
+.admin-status-bar {
+    border-color: rgba(255, 0, 85, 0.3);
 }
 
-/* HEADER DEL JUEGO */
+.admin-status-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.admin-status-info:last-child { margin-bottom: 0; }
+
+.admin-crown {
+    color: var(--neon-pink);
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.admin-phase-badge {
+    font-size: 12px;
+    color: var(--border-neon);
+    background: rgba(0, 255, 204, 0.08);
+    padding: 3px 8px;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 255, 204, 0.2);
+}
+
+.admin-vote-info {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.admin-controls {
+    border-color: rgba(255, 0, 85, 0.2);
+}
+
+.admin-section-title {
+    font-size: 13px;
+    color: var(--border-neon);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ==========================================
+   HEADER DEL JUEGO
+========================================== */
 .game-header {
     display: flex;
     justify-content: space-between;
@@ -141,7 +219,9 @@ button:hover {
 .timer-box { text-align: right; }
 #timer-display { font-size: 22px; font-weight: bold; }
 
-/* REJILLA DE ESTADÍSTICAS */
+/* ==========================================
+   ESTADÍSTICAS
+========================================== */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -156,11 +236,14 @@ button:hover {
     text-align: center;
     border-left: 3px solid var(--border-neon);
 }
-.stat-icon { font-size: 20px; }
-.stat-val { font-size: 16px; font-weight: bold; margin-top: 4px; }
-.stat-lbl { font-size: 11px; color: var(--text-muted); }
 
-/* OPCIONES DE ACCIÓN / BOTONES COMPUESTOS */
+.stat-icon { font-size: 20px; }
+.stat-val  { font-size: 16px; font-weight: bold; margin-top: 4px; }
+.stat-lbl  { font-size: 11px; color: var(--text-muted); }
+
+/* ==========================================
+   OPCIONES DE VOTACIÓN
+========================================== */
 .voting-options-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -178,14 +261,55 @@ button:hover {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    margin-top: 0;
+    width: 100%;
 }
 
-.btn-action:hover { background: #252942; border-color: var(--border-neon); }
+.btn-action:hover  { background: #252942; border-color: var(--border-neon); transform: translateY(-1px); }
 .btn-action.selected { border: 2px solid var(--border-neon); background: #1a2e36; }
-.act-icon { font-size: 22px; margin-bottom: 4px; }
-.act-desc { font-size: 11px; color: var(--text-muted); font-weight: normal; margin-top: 2px;}
 
-/* BANNER DE EVENTO ALEATORIO */
+.act-icon { font-size: 22px; margin-bottom: 4px; }
+.act-desc { font-size: 11px; color: var(--text-muted); font-weight: normal; margin-top: 2px; }
+
+.vote-status-text {
+    margin-top: 10px;
+    font-size: 13px;
+    text-align: center;
+    color: var(--border-neon);
+}
+
+/* ==========================================
+   PANEL ESPERA
+========================================== */
+.spinner {
+    margin: 20px auto;
+    border: 4px solid rgba(255,255,255,0.1);
+    border-left-color: var(--border-neon);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+}
+
+.internal-votes-box {
+    margin-top: 15px;
+    background: rgba(0,0,0,0.2);
+    padding: 10px;
+    border-radius: 6px;
+}
+
+.internal-votes-box h4 { font-size: 13px; margin-bottom: 6px; }
+
+#internal-votes-list {
+    list-style: none;
+    font-size: 13px;
+    text-align: left;
+    margin-top: 5px;
+}
+
+/* ==========================================
+   BANNER DE EVENTO
+========================================== */
 .event-banner {
     background: linear-gradient(90deg, #3b111a, #141622);
     border: 1px solid var(--neon-pink);
@@ -198,28 +322,31 @@ button:hover {
     animation: blink 2s infinite;
 }
 
-/* TABLA DE POSICIONES EN TIEMPO REAL */
+/* ==========================================
+   TABLA DE POSICIONES
+========================================== */
 .ranking-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 13px;
-    margin-top: 8px;
 }
 
-.ranking-table th, .ranking-table td {
-    padding: 8px;
+.ranking-table th,
+.ranking-table td {
+    padding: 8px 6px;
     text-align: left;
     border-bottom: 1px solid rgba(255,255,255,0.05);
 }
-.ranking-table th { color: var(--border-neon); }
 
-/* REVELACIÓN Y REPORTE */
-.fullscreen-reveal {
-    text-align: center;
-    padding-top: 40px;
-}
-.reveal-title { font-size: 28px; font-weight: bold; margin-bottom: 10px; color: var(--neon-pink); }
+.ranking-table th { color: var(--border-neon); font-size: 12px; }
+
+/* ==========================================
+   PANTALLA TRANSICIÓN
+========================================== */
+.fullscreen-reveal { text-align: center; padding-top: 40px; }
+.reveal-title  { font-size: 26px; font-weight: bold; margin-bottom: 10px; color: var(--neon-pink); }
 .reveal-graphic { font-size: 60px; margin: 20px 0; animation: scaleUp 0.5s ease-out; }
+
 .narrative-log {
     max-height: 180px;
     overflow-y: auto;
@@ -230,22 +357,80 @@ button:hover {
     font-size: 13px;
     line-height: 1.5;
 }
-.narrative-log p { margin-bottom: 8px; border-left: 2px solid var(--border-neon); padding-left: 6px; }
 
-/* PANTALLA PEDAGÓGICA Y FINAL */
-.honor-badge { background: #1a1d30; padding: 15px; border-radius: 8px; margin-top: 10px; }
-.strategy-analysis-box { background: #16192b; border-top: 3px solid var(--border-neon); padding: 15px; border-radius: 8px; margin-top: 25px; }
-.analysis-content h4 { margin: 12px 0 6px 0; color: var(--neon-yellow); }
-.analysis-content ul { padding-left: 18px; font-size: 13px; color: #cbd5e1; }
-.analysis-content li { margin-bottom: 8px; }
+.narrative-log p {
+    margin-bottom: 8px;
+    border-left: 2px solid var(--border-neon);
+    padding-left: 6px;
+}
 
-/* ANIMACIONES CLAVE */
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+/* ==========================================
+   PANTALLA FINAL
+========================================== */
+.podium-grid {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 15px 0;
+    flex-wrap: wrap;
+}
+
+.badges-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.honor-badge {
+    background: #1a1d30;
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.badge-trust   { color: var(--success); font-weight: bold; font-size: 13px; margin-top: 4px; }
+.badge-traitor { color: var(--neon-pink); font-weight: bold; font-size: 13px; margin-top: 4px; }
+
+.strategy-analysis-box {
+    background: #16192b;
+    border-top: 3px solid var(--border-neon);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.analysis-content { font-size: 13px; color: #cbd5e1; line-height: 1.5; }
+.analysis-content h4 { color: var(--neon-yellow); margin: 12px 0 6px 0; }
+.analysis-content p  { margin-bottom: 8px; }
+
+/* ==========================================
+   LOGO / LOBBY
+========================================== */
+.logo-area { text-align: center; padding: 30px 0 20px; }
+.duck-avatar { font-size: 48px; margin-bottom: 10px; }
+.subtitle { color: var(--text-muted); font-size: 14px; margin-top: 6px; }
+.status-text { margin-top: 12px; font-size: 13px; color: var(--text-muted); text-align: center; }
+.small-text  { font-size: 12px; color: var(--text-muted); }
+.text-muted  { color: var(--text-muted); }
+
+/* ==========================================
+   ANIMACIONES
+========================================== */
+@keyframes fadeIn  { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes scaleUp { from { transform: scale(0.3); } to { transform: scale(1); } }
-@keyframes blink { 0%, 100% { border-color: var(--neon-pink); } 50% { border-color: transparent; } }
+@keyframes blink   { 0%,100% { border-color: var(--neon-pink); } 50% { border-color: transparent; } }
+@keyframes spin    { to { transform: rotate(360deg); } }
 
-/* DISEÑO RESPONSIVE ADICIONAL */
-@media(max-width: 400px) {
-    #game-container { padding: 8px; }
-    .stat-val { font-size: 13px; }
+/* ==========================================
+   RESPONSIVE MÓVIL
+========================================== */
+@media (max-width: 420px) {
+    #game-container { padding: 10px; }
+    button { font-size: 14px; padding: 12px; }
+    .stat-val { font-size: 14px; }
+    .ranking-table th,
+    .ranking-table td { padding: 6px 4px; font-size: 12px; }
+    .admin-status-info { flex-direction: column; align-items: flex-start; }
+    .badges-grid { grid-template-columns: 1fr; }
 }

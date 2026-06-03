@@ -20,87 +20,78 @@
             <h1 class="neon-text">MAFIA DE PATOS</h1>
             <p class="subtitle">Traición, Confianza y Teoría de Juegos</p>
         </div>
-        <div class="card">
+
+        <!-- Formulario de login — se oculta tras entrar -->
+        <div class="card" id="admin-login-area">
             <h3>Únete al Sindicato Clandestino</h3>
             <div class="form-group">
                 <label for="player-name">Tu Alias de Mafioso:</label>
                 <input type="text" id="player-name" placeholder="Ej. Al Patone, Cuak Capone..." maxlength="15">
             </div>
-
-            <!-- Toggle contraseña admin -->
-            <div class="form-group" style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-                <input type="checkbox" id="admin-toggle" style="width:auto; accent-color:var(--neon-pink);">
-                <label for="admin-toggle" style="margin:0; color:var(--text-muted); font-size:13px; cursor:pointer;">
-                    Soy el Don (Profesor)
-                </label>
+            <div class="admin-toggle-row">
+                <input type="checkbox" id="admin-toggle">
+                <label for="admin-toggle">Soy el Don (Profesor)</label>
             </div>
-
-            <!-- Campo contraseña, oculto por defecto -->
             <div id="admin-password-box" class="form-group hidden">
-                <label for="admin-password" style="color:var(--neon-pink);">Clave del Don:</label>
+                <label for="admin-password">Clave del Don:</label>
                 <input type="password" id="admin-password" placeholder="Contraseña secreta..." maxlength="30">
-                <p id="pass-error" class="hidden" style="color:var(--neon-pink); font-size:12px; margin-top:4px;">
-                    ❌ Contraseña incorrecta. Intenta de nuevo.
-                </p>
+                <p id="pass-error" class="pass-error hidden">❌ Contraseña incorrecta. Intenta de nuevo.</p>
             </div>
-
             <button id="btn-join" class="btn-primary">Ingresar al Callejón</button>
             <div id="lobby-status" class="status-text">Esperando conexión...</div>
+        </div>
 
-            <!-- Panel admin (visible solo tras autenticarse como Don) -->
-            <div id="admin-panel" class="hidden">
-                <hr style="border-color:rgba(255,0,85,0.3); margin:15px 0;">
-                <h4 style="color:var(--neon-pink);">⚡ Panel del Don</h4>
-                <p style="font-size:13px;">Jugadores conectados: <strong id="player-count">0</strong></p>
+        <!-- Panel del Don — visible solo tras autenticarse -->
+        <div id="admin-panel" class="hidden">
 
-                <!-- Estado de la partida -->
-                <div style="background:#0d0f1a; border:1px solid rgba(255,0,85,0.2); border-radius:8px; padding:10px; margin:10px 0;">
-                    <p id="admin-round-label" style="font-size:12px; color:var(--border-neon); margin-bottom:8px;">Fase: LOGIN</p>
-                    <p id="admin-vote-count" style="font-size:12px; color:var(--text-muted);">Sin votos aún</p>
+            <!-- Estado general -->
+            <div class="admin-status-bar card">
+                <div class="admin-status-info">
+                    <span class="admin-crown">👑 EL DON</span>
+                    <span id="admin-round-label" class="admin-phase-badge">Fase: LOGIN — Ronda 0/5</span>
                 </div>
-
-                <!-- Botones de control -->
-                <button id="btn-start-game" class="btn-danger" style="margin-top:8px;">
-                    🎯 Iniciar Hostilidades (Asignar Mafias)
-                </button>
-                <button id="btn-launch-dashboard" class="btn-danger hidden" style="margin-top:8px;">
-                    ▶ Lanzar Primera Ronda
-                </button>
-                <button id="btn-force-resolve" class="btn-danger hidden" style="margin-top:8px; background:linear-gradient(135deg,#ff6600,#993d00);">
-                    ⚡ Forzar Resolución Ahora
-                </button>
-                <button id="btn-admin-next" class="btn-danger hidden" style="margin-top:8px;">
-                    ⏭ Iniciar Siguiente Ronda
-                </button>
-                <button id="btn-reset-game" class="btn-primary hidden" style="margin-top:8px;">
-                    🔄 Reiniciar Todo
-                </button>
-
-                <!-- Tabla de mafias en tiempo real -->
-                <div style="margin-top:15px;">
-                    <h4 style="font-size:13px; color:var(--border-neon); margin-bottom:8px;">📊 Monitor de Sindicatos</h4>
-                    <div class="table-responsive">
-                        <table class="ranking-table">
-                            <thead>
-                                <tr>
-                                    <th>Mafia</th>
-                                    <th>💰</th>
-                                    <th>⭐</th>
-                                    <th>👑</th>
-                                    <th>🗳️ Votos</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-mafia-tbody"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Log de última ronda -->
-                <div style="margin-top:15px;">
-                    <h4 style="font-size:13px; color:var(--border-neon); margin-bottom:8px;">📋 Log última ronda</h4>
-                    <div id="admin-round-log" class="narrative-log" style="max-height:140px;"></div>
+                <div class="admin-status-info">
+                    <span>👥 Conectados: <strong id="player-count">0</strong></span>
+                    <span id="admin-vote-count" class="admin-vote-info">Sin votos aún</span>
                 </div>
             </div>
+
+            <!-- Botones de control -->
+            <div class="admin-controls card">
+                <h4 class="admin-section-title">⚡ Control de Partida</h4>
+                <button id="btn-start-game" class="btn-danger">🎯 Asignar Mafias</button>
+                <button id="btn-launch-dashboard" class="btn-danger hidden">▶ Lanzar Primera Ronda</button>
+                <button id="btn-force-resolve" class="btn-force hidden">⚡ Forzar Resolución Ahora</button>
+                <button id="btn-admin-next" class="btn-danger hidden">⏭ Siguiente Ronda</button>
+                <button id="btn-end-game-now" class="btn-end hidden">🏁 Terminar Partida Ya</button>
+                <button id="btn-reset-game" class="btn-primary hidden">🔄 Nueva Partida</button>
+            </div>
+
+            <!-- Monitor de sindicatos -->
+            <div class="card">
+                <h4 class="admin-section-title">📊 Monitor de Sindicatos</h4>
+                <div class="table-responsive">
+                    <table class="ranking-table">
+                        <thead>
+                            <tr>
+                                <th>Mafia</th>
+                                <th>💰</th>
+                                <th>⭐</th>
+                                <th>👑</th>
+                                <th>🗳️</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-mafia-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Log última ronda -->
+            <div class="card">
+                <h4 class="admin-section-title">📋 Log última ronda</h4>
+                <div id="admin-round-log" class="narrative-log"></div>
+            </div>
+
         </div>
     </section>
 
@@ -199,18 +190,16 @@
                         <span class="act-desc">Si ambos aceptan, bonificador mutuo.</span>
                     </button>
                 </div>
-                <div id="vote-status" style="margin-top:10px;font-size:13px;text-align:center;color:var(--border-neon);">
-                    Aún no has emitido tu voto secreto.
-                </div>
+                <div id="vote-status" class="vote-status-text">Aún no has emitido tu voto secreto.</div>
             </div>
 
             <div id="panel-waiting-results" class="card hidden text-center">
-                <div class="spinner" style="margin:20px auto;border:4px solid rgba(255,255,255,0.1);border-left-color:var(--border-neon);border-radius:50%;width:30px;height:30px;animation:spin 1s linear infinite;"></div>
+                <div class="spinner"></div>
                 <h3>Votos Consolidados</h3>
                 <p>Esperando que las demás mafias cierren sus tratos...</p>
-                <div style="margin-top:15px;background:rgba(0,0,0,0.2);padding:10px;border-radius:6px;">
+                <div class="internal-votes-box">
                     <h4>Votos en tu Familia:</h4>
-                    <ul id="internal-votes-list" style="list-style:none;font-size:13px;text-align:left;margin-top:5px;"></ul>
+                    <ul id="internal-votes-list"></ul>
                 </div>
             </div>
         </main>
@@ -238,10 +227,7 @@
             <div class="card">
                 <h3>Reporte del Hampa — Ronda <span id="rep-ronda-num">1</span></h3>
                 <div id="round-narrative-log" class="narrative-log"></div>
-                <button id="btn-admin-next" class="btn-danger hidden" style="margin-top:15px;">
-                    ⏭ Iniciar Siguiente Ronda (Don)
-                </button>
-                <p id="player-wait-next" class="text-center text-muted" style="font-size:13px;margin-top:10px;">
+                <p class="text-center text-muted" style="font-size:13px; margin-top:10px;">
                     Esperando que el Don inicie la siguiente ronda...
                 </p>
             </div>
@@ -255,27 +241,28 @@
         <div class="card final-card text-center">
             <h1 class="neon-text-red">FIN DEL IMPERIO</h1>
             <h2>🏆 GANADOR: <span id="winner-mafia-name" class="neon-text">---</span> 🏆</h2>
-            <div id="final-podium" style="display:flex;gap:10px;justify-content:center;margin:15px 0;"></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;">
-                <div style="background:#1a1d30;padding:10px;border-radius:6px;">
-                    <span>😇</span><h4>El Más Confiable</h4>
-                    <p id="badge-trust-name" style="color:var(--success);font-weight:bold;">Nadie</p>
+            <div id="final-podium" class="podium-grid"></div>
+            <div class="badges-grid">
+                <div class="honor-badge">
+                    <span>😇</span>
+                    <h4>El Más Confiable</h4>
+                    <p id="badge-trust-name" class="badge-trust">Nadie</p>
                 </div>
-                <div style="background:#1a1d30;padding:10px;border-radius:6px;">
-                    <span>🐍</span><h4>Mayor Traidor</h4>
-                    <p id="badge-traitor-name" style="color:var(--neon-pink);font-weight:bold;">Nadie</p>
+                <div class="honor-badge">
+                    <span>🐍</span>
+                    <h4>Mayor Traidor</h4>
+                    <p id="badge-traitor-name" class="badge-traitor">Nadie</p>
                 </div>
             </div>
             <div class="strategy-analysis-box text-left">
                 <h3 class="neon-text">📈 Análisis Estratégico: Teoría de Juegos</h3>
-                <div class="analysis-content" style="font-size:13px;color:#cbd5e1;line-height:1.4;">
-                    <h4 style="color:var(--neon-yellow);margin-top:8px;">Dilema del Prisionero Repetido</h4>
+                <div class="analysis-content">
+                    <h4>Dilema del Prisionero Repetido</h4>
                     <p>Cuando dos mafias cooperaban mutuamente, alcanzaban un <em>Óptimo de Pareto</em>. El incentivo individual para la traición generaba ventajas a corto plazo desestabilizando los acuerdos.</p>
-                    <h4 style="color:var(--neon-yellow);margin-top:8px;">Reputación Dinámica</h4>
+                    <h4>Reputación Dinámica</h4>
                     <p>Las mafias con baja Reputación experimentaron aislamiento sistémico, demostrando el impacto a largo plazo de las decisiones egoístas en economías cerradas.</p>
                 </div>
             </div>
-            <button id="btn-reset-game" class="btn-primary hidden" style="margin-top:15px;">🔄 Reiniciar Todo el Sistema</button>
         </div>
     </section>
 
