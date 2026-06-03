@@ -8,7 +8,7 @@ const firebaseConfig = {
     storageBucket: "mafia-de-patos-a9e22.firebasestorage.app",
     messagingSenderId: "32475436802",
     appId: "1:32475436802:web:7c3d0011c40bdd11a9541b",
-    databaseURL: "https://mafia-de-patos-a9e22-default-rtdb.firebaseio.com/"
+    databaseURL: "https://mafia-de-patos-a9e22-default-rtdb.firebaseio.com"
 };
 
 // Inicialización de la red
