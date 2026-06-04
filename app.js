@@ -90,19 +90,40 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('btn-reset-game').addEventListener('click', masterResetEverything);
     document.getElementById('btn-host-reset-final').addEventListener('click', masterResetEverything);
 
-    // Botones de voto — registrados aquí una vez, usan siempre el target actual del select
+    // ==========================================
+    // NUEVA FUNCIONALIDAD 1.5: Confirmación de votos
+    // ==========================================
     document.querySelectorAll('.btn-action').forEach(btn => {
         btn.addEventListener('click', () => {
             if (!myPlayerId || !myMafiaId) return;
-            const act    = btn.getAttribute('data-action');
-            const target = document.getElementById('target-mafia').value;
+            
+            const act = btn.getAttribute('data-action');
+            const targetSelect = document.getElementById('target-mafia');
+            const targetId = targetSelect.value;
+            const targetName = targetSelect.options[targetSelect.selectedIndex]?.text || targetId;
+            
+            // Formatear texto amigable para la ventana de confirmación
+            const actionText = {
+                cooperar: "COOPERAR con",
+                traicionar: "TRAICIONAR a",
+                robar: "ROBAR RECURSOS a",
+                alianza: "proponer un PACTO TEMPORAL a"
+            }[act] || act;
+
+            // Ventana emergente de confirmación (Funcionalidad 1.5)
+            if (!confirm(`¿Confirmas que deseas ${actionText} a "${targetName}"?`)) {
+                return; // Cancelar acción si el jugador presiona cancelar
+            }
+
             document.querySelectorAll('.btn-action').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
+            
             db.ref(`game_room/votes/ronda_${globalGameState.round}/${myPlayerId}`).set({
-                player: myPlayerName, mafiaSource: myMafiaId, action: act, target: target
+                player: myPlayerName, mafiaSource: myMafiaId, action: act, target: targetId
             });
+            
             SoundEffects.play('click');
-            document.getElementById('vote-status').innerText = `✅ Voto enviado: ${act} → ${globalGameState.mafias?.[target]?.name || target}`;
+            document.getElementById('vote-status').innerText = `✅ Voto enviado: ${act} → ${globalGameState.mafias?.[targetId]?.name || targetId}`;
         });
     });
 
@@ -341,11 +362,9 @@ function syncGamePhase(phase) {
     // FIX ERROR 5: fase LOGIN manda a todos al inicio y limpia estado local
     if (phase === 'LOGIN') {
         if (myPlayerId) {
-            // Limpiar estado local sin recargar
             myMafiaId = null; myMafiaName = ""; myPlayerId = null; myPlayerName = "";
             lastProcessedPhaseKey = "";
             if (timerInterval) clearInterval(timerInterval);
-            // Mostrar login de nuevo
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-login').classList.add('active');
             document.getElementById('admin-login-area').classList.remove('hidden');
@@ -360,7 +379,6 @@ function syncGamePhase(phase) {
     if (phase === 'ASSIGNMENT') {
         if (myMafiaId) {
             changeScreen('screen-assignment');
-            // FIX ERROR 1: listener de nombre AQUÍ, cuando myMafiaId ya está asignado
             setupMafiaNameListener();
         }
         return;
@@ -386,8 +404,6 @@ function syncGamePhase(phase) {
     }
 }
 
-// FIX ERROR 1: función separada para el listener del nombre de mafia
-// Se llama solo cuando myMafiaId ya tiene valor
 function setupMafiaNameListener() {
     db.ref(`game_room/mafias/${myMafiaId}`).on('value', snap => {
         const mData = snap.val();
@@ -399,7 +415,6 @@ function setupMafiaNameListener() {
         if (namingBox) namingBox.classList.toggle('hidden', mData.leaderId !== myPlayerId);
     });
 
-    // Registrar botón guardar nombre aquí, cuando ya sabemos myMafiaId
     const saveBtn = document.getElementById('btn-save-mafia-name');
     const newSaveBtn = saveBtn.cloneNode(true);
     saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
@@ -421,7 +436,6 @@ function renderDashboard() {
     document.getElementById('dash-mafia-name').innerText  = myMafiaName;
     document.getElementById('timer-label').innerText = `RONDA ${globalGameState.round || 1}/5`;
 
-    // Actualizar stats de mi mafia en tiempo real
     db.ref(`game_room/mafias/${myMafiaId}`).on('value', s => {
         const m = s.val(); if (!m) return;
         document.getElementById('stat-money').innerText = `$${m.money}`;
@@ -429,7 +443,6 @@ function renderDashboard() {
         document.getElementById('stat-inf').innerText   = m.influence;
     });
 
-    // Evento activo
     const ev = globalGameState.currentEvent;
     document.getElementById('event-banner').classList.toggle('hidden', !ev);
     if (ev) {
@@ -437,10 +450,9 @@ function renderDashboard() {
         document.getElementById('event-desc').innerText  = ev.desc;
     }
 
-    // FIX ERROR 2: poblar selector guardando selección actual antes de repoblar
+    // FIX ERROR 2: restaurar y proteger selección del selector de ataque
     populateTargetSelect();
 
-    // Resetear paneles de votación al entrar a nueva ronda
     document.getElementById('panel-voting').classList.remove('hidden');
     document.getElementById('panel-waiting-results').classList.add('hidden');
     document.getElementById('vote-status').innerText = "No has emitido tu voto secreto.";
@@ -451,10 +463,9 @@ function renderDashboard() {
     listenInternalVotes();
 }
 
-// FIX ERROR 2: función que preserva la selección al repoblar el selector
 function populateTargetSelect() {
     const targetSelect = document.getElementById('target-mafia');
-    const previousValue = targetSelect.value; // guardar antes de repoblar
+    const previousValue = targetSelect.value;
     targetSelect.innerHTML = "";
     Object.keys(globalGameState.mafias || {}).forEach(mId => {
         if (mId !== myMafiaId) {
@@ -464,7 +475,6 @@ function populateTargetSelect() {
             targetSelect.appendChild(opt);
         }
     });
-    // Restaurar selección si todavía existe en la lista
     if (previousValue && targetSelect.querySelector(`option[value="${previousValue}"]`)) {
         targetSelect.value = previousValue;
     }
@@ -506,42 +516,63 @@ function runClientTimer(endTime) {
 }
 
 // ==========================================
-// PANTALLA FINAL
-// FIX ERROR 3: winner-mafia-name ahora tiene comillas correctas en el HTML
+// PANTALLA FINAL CORREGIDA Y OPTIMIZADA (Pendiente 1)
+// Completamente sincronizada con index.html
 // ==========================================
 function renderEndScreen() {
     changeScreen('screen-end');
     SoundEffects.play('victoria');
 
-    const arr = Object.values(globalGameState.mafias || {}).sort((a, b) => b.money - a.money);
+    const mafiasData = globalGameState.mafias || {};
+    const arr = Object.values(mafiasData).sort((a, b) => b.money - a.money);
 
-    const winnerEl = document.getElementById('winner-mafia-name');
-    if (winnerEl) winnerEl.innerText = arr.length > 0 ? arr[0].name : "Sin ganador";
+    // Sincronizado con ID real: "winner-name"
+    const winnerEl = document.getElementById('winner-name');
+    if (winnerEl) {
+        winnerEl.innerText = arr.length > 0 ? arr[0].name.toUpperCase() : "SIN GANADOR ASIGNADO";
+    }
 
+    // Renderizado dinámico del podio
     const podiumEl = document.getElementById('final-podium');
     if (podiumEl) {
-        podiumEl.innerHTML = arr.slice(0, 3).map((m, i) =>
-            `<div class="stat-card"><h3>#${i+1}</h3><h4>${m.name}</h4><p>$${m.money}</p></div>`
-        ).join("");
+        if (arr.length === 0) {
+            podiumEl.innerHTML = `<p style="color:var(--text-muted); text-align:center;">No hay datos de sindicatos.</p>`;
+        } else {
+            podiumEl.innerHTML = arr.slice(0, 3).map((m, i) => {
+                const borderColor = i === 0 ? 'var(--neon-yellow)' : 'var(--border-neon)';
+                return `
+                 <div class="stat-card" style="border-left: 4px solid ${borderColor}; margin-bottom: 10px; padding: 12px; background: #1a1d30; border-radius:8px;">
+                    <h3 style="margin:0; font-size:14px; color:${borderColor}">#${i+1} Lugar</h3>
+                    <h4 style="margin:4px 0; font-size:16px; font-weight:bold;">${m.name}</h4>
+                    <p style="color:var(--success); font-weight:bold; margin:0;">$${m.money}</p>
+                 </div>`;
+            }).join("");
+        }
     }
 
-    const stats = globalGameState.estadisticasHistoricas;
-    if (stats) {
-        let maxT = -1, tName = "Ninguno";
-        let maxC = -1, cName = "Ninguno";
-        Object.keys(stats.traiciones || {}).forEach(id => {
-            if (stats.traiciones[id] > maxT) { maxT = stats.traiciones[id]; tName = globalGameState.mafias?.[id]?.name || id; }
-        });
-        Object.keys(stats.cooperaciones || {}).forEach(id => {
-            if (stats.cooperaciones[id] > maxC) { maxC = stats.cooperaciones[id]; cName = globalGameState.mafias?.[id]?.name || id; }
-        });
-        const trustEl   = document.getElementById('badge-trust-name');
-        const traitorEl = document.getElementById('badge-traitor-name');
-        if (trustEl)   trustEl.innerText   = `${cName} (${maxC} veces)`;
-        if (traitorEl) traitorEl.innerText  = `${tName} (${maxT} veces)`;
-    }
+    // Cálculo y renderizado de menciones especiales (Mero Traidor / Más Confiable)
+    const stats = globalGameState.estadisticasHistoricas || { traiciones: {}, cooperaciones: {} };
+    let maxT = -1, tName = "Ninguno";
+    let maxC = -1, cName = "Ninguno";
 
-    // Botón nueva partida solo para el host
+    Object.keys(stats.traiciones || {}).forEach(id => {
+        if (stats.traiciones[id] > maxT) { 
+            maxT = stats.traiciones[id]; 
+            tName = mafiasData[id]?.name || id; 
+        }
+    });
+    Object.keys(stats.cooperaciones || {}).forEach(id => {
+        if (stats.cooperaciones[id] > maxC) { 
+            maxC = stats.cooperaciones[id]; 
+            cName = mafiasData[id]?.name || id; 
+        }
+    });
+
+    const trustEl = document.getElementById('badge-trust-name');
+    const traitorEl = document.getElementById('badge-traitor-name');
+    if (trustEl) trustEl.innerText = maxC > 0 ? `${cName} (${maxC} veces)` : "Ninguno";
+    if (traitorEl) traitorEl.innerText = maxT > 0 ? `${tName} (${maxT} veces)` : "Ninguno";
+
     const resetFinalEl = document.getElementById('btn-host-reset-final');
     if (resetFinalEl) resetFinalEl.classList.toggle('hidden', !isHost);
 }
@@ -603,11 +634,9 @@ function masterActionNextRound() {
 
 function masterEndGameNow() {
     SoundEffects.play('click');
-    // Resolver la ronda actual primero para tener datos frescos, luego ir a END
     db.ref('game_room').once('value', snap => {
         const game = snap.val();
         if (game?.currentPhase === 'DASHBOARD') {
-            // Hay una ronda en curso, resolverla antes de terminar
             resolveRoundLogic(true);
         } else {
             db.ref('game_room').update({ currentPhase: 'END' });
@@ -615,15 +644,12 @@ function masterEndGameNow() {
     });
 }
 
-// FIX ERROR 5: masterResetEverything borra todo y manda a todos al login
 function masterResetEverything() {
     if (!confirm("¿Reset completo? Esto borrará toda la partida y mandará a todos al login.")) return;
     SoundEffects.play('click');
-    // Limpiar estado propio del admin
     myMafiaId = null; myMafiaName = "";
     lastProcessedPhaseKey = "";
     if (timerInterval) clearInterval(timerInterval);
-    // LOGIN en Firebase notifica a todos los jugadores que vuelvan al inicio
     db.ref('game_room').set({ currentPhase: 'LOGIN' }).then(() => {
         window.location.reload();
     });
@@ -631,7 +657,6 @@ function masterResetEverything() {
 
 // ==========================================
 // RESOLUCIÓN DE RONDA
-// goToEnd=true salta directo a END después de resolver
 // ==========================================
 function resolveRoundLogic(goToEnd = false) {
     db.ref('game_room').once('value', snap => {

@@ -41,10 +41,8 @@
             <div id="lobby-status" class="status-text">Esperando conexión...</div>
         </div>
 
-        <!-- PANEL DEL DON — oculto hasta que se autentique -->
+        <!-- PANEL DEL DON -->
         <div id="admin-panel" class="hidden">
-
-            <!-- Barra de estado -->
             <div class="admin-status-bar card">
                 <div class="admin-status-row">
                     <span class="admin-crown">👑 EL DON — PANEL MAESTRO</span>
@@ -56,7 +54,6 @@
                 </div>
             </div>
 
-            <!-- Controles de partida -->
             <div class="admin-controls card">
                 <h4 class="admin-section-title">⚡ Control de Partida</h4>
                 <div class="admin-btn-grid">
@@ -69,7 +66,6 @@
                 </div>
             </div>
 
-            <!-- Mapa de guerra -->
             <div class="card" id="war-map-box">
                 <h4 class="admin-section-title">🗺️ Mapa de Guerra del Don</h4>
                 <div class="war-map-legend">
@@ -92,7 +88,6 @@
                 </div>
             </div>
 
-            <!-- Monitor de inteligencia -->
             <div class="card">
                 <h4 class="admin-section-title">📊 Monitor de Inteligencia</h4>
                 <div class="table-responsive">
@@ -105,13 +100,11 @@
                 </div>
             </div>
 
-            <!-- Registro de operaciones -->
             <div class="card">
                 <h4 class="admin-section-title">📋 Registro de Operaciones</h4>
                 <div id="admin-round-log" class="narrative-log"></div>
             </div>
-
-        </div><!-- fin admin-panel -->
+        </div>
     </section>
 
     <!-- ==============================
@@ -258,15 +251,15 @@
     </section>
 
     <!-- ==============================
-         PANTALLA 5: FIN DEL JUEGO
-         FIX ERROR 3: comillas corregidas en winner-mafia-name
+         PANTALLA 5: FIN DEL JUEGO (Sincronizada con app.js)
     ============================== -->
     <section id="screen-end" class="screen">
         <div class="card text-center">
             <h1 class="neon-text-red">FIN DEL IMPERIO</h1>
-            <h2 style="margin:10px 0;">🏆 GANADOR: <span id="winner-mafia-name" class="neon-text">---</span> 🏆</h2>
+            <h2 style="margin:10px 0; font-size:18px;">🏆 GANADOR: <span id="winner-name" class="neon-text">---</span> 🏆</h2>
 
-            <div id="final-podium" class="podium-grid"></div>
+            <!-- El podio dinámico se inyectará aquí -->
+            <div id="final-podium" style="margin: 20px 0;"></div>
 
             <div class="badges-grid">
                 <div class="honor-badge">
