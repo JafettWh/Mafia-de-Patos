@@ -1,18 +1,23 @@
 /* ==========================================
-   VARIABLES GLOBALES
+   PALETA DE COLORES Y VARIABLES GLOBALES
 ========================================== */
 :root {
-    --bg-main:    #0a0b10;
-    --bg-card:    #141622;
-    --border-neon:#00ffcc;
-    --neon-pink:  #ff0055;
-    --neon-yellow:#ffcc00;
+    --bg-main: #0a0b10;
+    --bg-card: #141622;
+    --border-neon: #00ffcc;
+    --neon-pink: #ff0055;
+    --neon-yellow: #ffcc00;
     --text-light: #e2e8f0;
     --text-muted: #64748b;
-    --success:    #10b981;
+    --success: #10b981;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
 
 body {
     background-color: var(--bg-main);
@@ -41,12 +46,13 @@ body {
 ========================================== */
 .card {
     background: var(--bg-card);
-    border: 1px solid rgba(0,255,204,0.15);
+    border: 1px solid rgba(0, 255, 204, 0.15);
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 15px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.37);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
+
 .text-center { text-align: center; }
 .text-left   { text-align: left; }
 .hidden      { display: none !important; }
@@ -54,16 +60,21 @@ body {
 /* ==========================================
    EFECTOS NEÓN
 ========================================== */
-.neon-text     { color:#fff; text-shadow: 0 0 7px var(--border-neon), 0 0 10px var(--border-neon), 0 0 21px var(--border-neon); }
-.neon-text-red { color:#fff; text-shadow: 0 0 7px var(--neon-pink), 0 0 10px var(--neon-pink); }
+.neon-text     { color: #fff; text-shadow: 0 0 7px var(--border-neon), 0 0 10px var(--border-neon), 0 0 21px var(--border-neon); }
+.neon-text-red { color: #fff; text-shadow: 0 0 7px var(--neon-pink), 0 0 10px var(--neon-pink); }
 .neon-glow     { filter: drop-shadow(0 0 8px var(--border-neon)); }
 
 /* ==========================================
-   FORMULARIOS
+   FORMULARIOS Y SELECTORES
 ========================================== */
 .form-group { margin-bottom: 15px; }
 
-label { display:block; margin-bottom:6px; font-size:14px; color:var(--border-neon); }
+label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: var(--border-neon);
+}
 
 input[type="text"],
 input[type="password"],
@@ -78,9 +89,13 @@ select {
     outline: none;
     transition: 0.3s;
 }
+
 input[type="text"]:focus,
 input[type="password"]:focus,
-select:focus { border-color:var(--border-neon); box-shadow: 0 0 8px rgba(0,255,204,0.3); }
+select:focus {
+    border-color: var(--border-neon);
+    box-shadow: 0 0 8px rgba(0, 255, 204, 0.3);
+}
 
 .admin-toggle-row {
     display: flex;
@@ -88,258 +103,176 @@ select:focus { border-color:var(--border-neon); box-shadow: 0 0 8px rgba(0,255,2
     gap: 10px;
     margin-bottom: 12px;
 }
+
 .admin-toggle-row input[type="checkbox"] {
-    width: 18px; height: 18px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
     accent-color: var(--neon-pink);
     cursor: pointer;
 }
-.admin-toggle-row label { margin:0; color:var(--text-muted); font-size:13px; cursor:pointer; }
 
-.pass-error { color:var(--neon-pink); font-size:12px; margin-top:4px; }
+.admin-toggle-row label {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.pass-error {
+    color: var(--neon-pink);
+    font-size: 12px;
+    margin-top: 4px;
+}
 
 /* ==========================================
-   BOTONES BASE
+   DISEÑO DEL BOTONERÍA COMPLETA
 ========================================== */
 button {
     width: 100%;
-    padding: 13px;
+    padding: 14px;
     border: none;
-    border-radius: 8px;
-    font-size: 14px;
+    border-radius: 6px;
+    font-size: 15px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s ease;
     margin-top: 8px;
 }
-button:hover  { transform: translateY(-2px); filter: brightness(1.15); }
+
+button:hover { transform: translateY(-2px); filter: brightness(1.15); }
 button:active { transform: translateY(0); }
 
-.btn-primary { background: linear-gradient(135deg,#00ffcc,#00a3ff); color:#000; }
-.btn-success { background: linear-gradient(135deg,var(--success),#065f46); color:#fff; }
+.btn-primary { background: linear-gradient(135deg, #00ffcc, #00a3ff); color: #000; }
+.btn-success { background: linear-gradient(135deg, var(--success), #065f46); color: #fff; }
+.btn-force   { background: linear-gradient(135deg, #ff6600, #993d00); color: #fff; }
+.btn-end     { background: linear-gradient(135deg, #cc00ff, #6600aa); color: #fff; }
 
-/* ==========================================
-   BOTONES DEL PANEL ADMIN
-   Todos con clase .btn-admin-* para estilos uniformes en móvil
-========================================== */
-.btn-admin-blue   { background: #2563eb; color:#fff; }
-.btn-admin-green  { background: #16a34a; color:#fff; }
-.btn-admin-orange { background: #ea580c; color:#fff; }
-.btn-admin-purple { background: #7c3aed; color:#fff; }
-.btn-admin-end    { background: linear-gradient(135deg,#cc00ff,#6600aa); color:#fff; grid-column: span 2; }
-.btn-admin-reset  { background: linear-gradient(135deg,#dc2626,#7f1d1d); color:#fff; grid-column: span 2; }
-
-/* ==========================================
-   PANEL DEL DON
-========================================== */
-#admin-panel { margin-top: 10px; }
-
-.admin-status-bar { border-color: rgba(255,0,85,0.35) !important; }
-
-.admin-status-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 6px;
-}
-.admin-status-row:last-child { margin-bottom: 0; }
-
-.admin-crown      { color:var(--neon-pink); font-weight:bold; font-size:14px; }
-.admin-phase-badge {
-    font-size: 11px;
-    color: var(--border-neon);
-    background: rgba(0,255,204,0.08);
-    padding: 3px 8px;
-    border-radius: 20px;
-    border: 1px solid rgba(0,255,204,0.2);
-    white-space: nowrap;
-}
-.admin-vote-info  { font-size:12px; color:var(--text-muted); }
-.admin-section-title { font-size:12px; color:var(--border-neon); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px; font-weight:bold; }
-
-/* Grid de botones admin: 2 columnas en móvil */
-.admin-controls { padding: 15px; }
+/* MODIFICADORES ESPECÍFICOS PARA EL PANEL DEL DON MÓVIL */
 .admin-btn-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
 }
-.admin-btn-grid button { margin-top: 0; font-size: 12px; padding: 10px 8px; }
+.admin-btn-grid button { margin-top: 0; padding: 10px; font-size: 13px; }
 
-/* Leyenda mapa de guerra */
-.war-map-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 10px;
-}
-.legend-item { font-size: 11px; font-weight: bold; }
+.btn-primary-admin { background: #2563eb; color: #fff; }
+.btn-success-admin { background: #16a34a; color: #fff; }
+.btn-next-admin    { background: #4f46e5; color: #fff; }
+.btn-danger-admin   { background: #dc2626; color: #fff; grid-column: span 2; }
 
-/* Contenedor SVG mapa guerra */
+/* ==========================================
+   ESTILOS MAPA DE GUERRA (SVG)
+========================================== */
 .svg-container {
     width: 100%;
     display: flex;
     justify-content: center;
+    align-items: center;
     background: #090b11;
     border-radius: 8px;
-    padding: 8px;
-    border: 1px solid rgba(255,255,255,0.03);
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
 }
-#war-map-svg { width:100%; max-width:340px; height:auto; }
 
-/* Badges de voto en tabla admin */
-.vote-badge-cooperar   { color:#10b981; background:rgba(16,185,129,0.1); padding:2px 5px; border-radius:4px; font-size:11px; font-weight:bold; }
-.vote-badge-traicionar { color:#ff0055; background:rgba(255,0,85,0.1);   padding:2px 5px; border-radius:4px; font-size:11px; font-weight:bold; }
-.vote-badge-robar      { color:#ffcc00; background:rgba(255,204,0,0.1);  padding:2px 5px; border-radius:4px; font-size:11px; font-weight:bold; }
-.vote-badge-alianza    { color:#00ffff; background:rgba(0,255,255,0.1);  padding:2px 5px; border-radius:4px; font-size:11px; font-weight:bold; }
-
-/* ==========================================
-   HEADER DEL JUEGO
-========================================== */
-.game-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: var(--bg-card);
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    border-bottom: 2px solid var(--border-neon);
-}
-.player-info { display:flex; align-items:center; gap:10px; }
-.avatar { font-size:28px; }
-.timer-box { text-align:right; }
-#timer-label  { font-size:11px; color:var(--text-muted); }
-#timer-display { font-size:22px; font-weight:bold; }
-
-/* ==========================================
-   STATS GRID
-========================================== */
-.stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:15px; }
-.stat-card { background:#1a1d30; padding:10px; border-radius:8px; text-align:center; border-left:3px solid var(--border-neon); }
-.stat-icon { font-size:18px; }
-.stat-val  { font-size:16px; font-weight:bold; margin-top:4px; }
-.stat-lbl  { font-size:11px; color:var(--text-muted); }
-
-/* ==========================================
-   ACCIONES DE VOTACIÓN
-========================================== */
-.voting-options-grid { display:grid; grid-template-columns:1fr; gap:10px; margin-top:10px; }
-
-.btn-action {
-    background: #1d2033;
-    border: 1px solid rgba(255,255,255,0.05);
-    text-align: left;
-    padding: 12px;
-    border-radius: 8px;
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+#war-map-svg {
     width: 100%;
-    margin-top: 0;
-    font-size: 14px;
+    max-width: 360px;
+    height: auto;
 }
-.btn-action:hover   { background:#252942; border-color:var(--border-neon); transform:translateY(-1px); }
-.btn-action.selected{ border:2px solid var(--border-neon); background:#1a2e36; }
-.act-icon { font-size:22px; margin-bottom:4px; }
-.act-desc { font-size:11px; color:var(--text-muted); font-weight:normal; margin-top:2px; }
-.vote-status-text { margin-top:10px; font-size:13px; text-align:center; color:var(--border-neon); }
 
-/* ==========================================
-   BANNER DE EVENTO
-========================================== */
-.event-banner {
-    background: linear-gradient(90deg,#3b111a,#141622);
-    border: 1px solid var(--neon-pink);
-    border-radius: 8px;
-    padding: 10px 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 15px;
-    animation: blink 2s infinite;
+.svg-node-element {
+    stroke-width: 2px;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.event-icon { font-size:24px; }
-.event-details h5 { font-size:13px; color:var(--neon-pink); margin-bottom:3px; }
-.event-details p  { font-size:12px; color:var(--text-light); }
+
+/* INSIGNIAS DE INTENCIONES EN EL MONITOR DEL DON */
+.vote-badge-cooperar   { color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+.vote-badge-traicionar { color: #ff0055; background: rgba(255, 0, 85, 0.1); padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+.vote-badge-robar      { color: #ffcc00; background: rgba(255, 204, 0, 0.1); padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+.vote-badge-alianza    { color: #00ffff; background: rgba(0, 255, 255, 0.1); padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 
 /* ==========================================
-   TABLAS
+   COMPONENTES DE JUEGO ADICIONALES
 ========================================== */
-.table-responsive { overflow-x:auto; }
-.ranking-table { width:100%; border-collapse:collapse; font-size:12px; }
-.ranking-table th,
-.ranking-table td { padding:7px 5px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.05); white-space:nowrap; }
-.ranking-table th { color:var(--border-neon); font-size:11px; }
+.admin-status-bar { border-color: rgba(255, 0, 85, 0.3); }
+.admin-status-info { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.admin-status-info:last-child { margin-bottom: 0; }
+.admin-crown { color: var(--neon-pink); font-weight: bold; font-size: 15px; }
+.admin-phase-badge { font-size: 12px; color: var(--border-neon); background: rgba(0, 255, 204, 0.08); padding: 3px 8px; border-radius: 20px; border: 1px solid rgba(0, 255, 204, 0.2); }
+.admin-vote-info { font-size: 12px; color: var(--text-muted); }
+.admin-section-title { font-size: 13px; color: var(--border-neon); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.game-header { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 12px; border-radius: 8px; margin-bottom: 15px; border-bottom: 2px solid var(--border-neon); }
+.player-info { display: flex; align-items: center; gap: 10px; }
+.avatar { font-size: 28px; }
+.timer-box { text-align: right; }
+#timer-display { font-size: 22px; font-weight: bold; }
+
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+.stat-card { background: #1a1d30; padding: 10px; border-radius: 8px; text-align: center; border-left: 3px solid var(--border-neon); }
+.stat-icon { font-size: 20px; }
+.stat-val  { font-size: 16px; font-weight: bold; margin-top: 4px; }
+.stat-lbl  { font-size: 11px; color: var(--text-muted); }
+
+.voting-options-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px; }
+.btn-action { background: #1d2033; border: 1px solid rgba(255,255,255,0.05); text-align: left; padding: 12px; border-radius: 8px; color: #fff; display: flex; flex-direction: column; align-items: flex-start; margin-top: 0; width: 100%; }
+.btn-action:hover  { background: #252942; border-color: var(--border-neon); transform: translateY(-1px); }
+.btn-action.selected { border: 2px solid var(--border-neon); background: #1a2e36; }
+.act-icon { font-size: 22px; margin-bottom: 4px; }
+.act-desc { font-size: 11px; color: var(--text-muted); font-weight: normal; margin-top: 2px; }
+.vote-status-text { margin-top: 10px; font-size: 13px; text-align: center; color: var(--border-neon); }
+
+.spinner { margin: 20px auto; border: 4px solid rgba(255,255,255,0.1); border-left-color: var(--border-neon); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+.internal-votes-box { margin-top: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; }
+.internal-votes-box h4 { font-size: 13px; margin-bottom: 6px; }
+#internal-votes-list { list-style: none; font-size: 13px; text-align: left; margin-top: 5px; }
+
+.event-banner { background: linear-gradient(90deg, #3b111a, #141622); border: 1px solid var(--neon-pink); border-radius: 8px; padding: 10px; display: flex; align-items: center; gap: 12px; margin-bottom: 15px; animation: blink 2s infinite; }
+.ranking-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ranking-table th, .ranking-table td { padding: 8px 6px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.ranking-table th { color: var(--border-neon); font-size: 12px; }
+
+.fullscreen-reveal { text-align: center; padding-top: 40px; }
+.reveal-title  { font-size: 26px; font-weight: bold; margin-bottom: 10px; color: var(--neon-pink); }
+.reveal-graphic { font-size: 60px; margin: 20px 0; animation: scaleUp 0.5s ease-out; }
+.narrative-log { max-height: 180px; overflow-y: auto; background: #090a0f; padding: 12px; border-radius: 6px; text-align: left; font-size: 13px; line-height: 1.5; }
+.narrative-log p { margin-bottom: 8px; border-left: 2px solid var(--border-neon); padding-left: 6px; }
+
+.podium-grid { display: flex; gap: 10px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
+.badges-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+.honor-badge { background: #1a1d30; padding: 10px; border-radius: 6px; text-align: center; }
+.badge-trust   { color: var(--success); font-weight: bold; font-size: 13px; margin-top: 4px; }
+.badge-traitor { color: var(--neon-pink); font-weight: bold; font-size: 13px; margin-top: 4px; }
+.strategy-analysis-box { background: #16192b; border-top: 3px solid var(--border-neon); padding: 15px; border-radius: 8px; margin-top: 20px; }
+.analysis-content { font-size: 13px; color: #cbd5e1; line-height: 1.5; }
+.analysis-content h4 { color: var(--neon-yellow); margin: 12px 0 6px 0; }
+.analysis-content p  { margin-bottom: 8px; }
+
+.logo-area { text-align: center; padding: 30px 0 20px; }
+.duck-avatar { font-size: 48px; margin-bottom: 10px; }
+.subtitle { color: var(--text-muted); font-size: 14px; margin-top: 6px; }
+.status-text { margin-top: 12px; font-size: 13px; color: var(--text-muted); text-align: center; }
+.small-text  { font-size: 12px; color: var(--text-muted); }
 
 /* ==========================================
-   PANEL DE ESPERA (VOTOS)
+   ANIMACIONES CORE
 ========================================== */
-.spinner { margin:20px auto; border:4px solid rgba(255,255,255,0.1); border-left-color:var(--border-neon); border-radius:50%; width:30px; height:30px; animation:spin 1s linear infinite; }
-.internal-votes-box { margin-top:15px; background:rgba(0,0,0,0.2); padding:10px; border-radius:6px; text-align:left; }
-.internal-votes-box h4 { font-size:13px; margin-bottom:6px; }
-#internal-votes-list { list-style:none; font-size:13px; }
-#internal-votes-list li { margin-bottom:4px; }
+@keyframes fadeIn  { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes scaleUp { from { transform: scale(0.3); } to { transform: scale(1); } }
+@keyframes blink   { 0%,100% { border-color: var(--neon-pink); } 50% { border-color: transparent; } }
+@keyframes spin    { to { transform: rotate(360deg); } }
 
 /* ==========================================
-   TRANSICIÓN
-========================================== */
-.fullscreen-reveal { text-align:center; padding-top:30px; }
-.reveal-title   { font-size:24px; font-weight:bold; margin-bottom:10px; color:var(--neon-pink); }
-.reveal-graphic { font-size:56px; margin:15px 0; animation:scaleUp 0.5s ease-out; }
-
-.narrative-log { max-height:200px; overflow-y:auto; background:#090a0f; padding:12px; border-radius:6px; text-align:left; font-size:13px; line-height:1.5; }
-.narrative-log p { margin-bottom:8px; border-left:2px solid var(--border-neon); padding-left:6px; }
-
-/* ==========================================
-   PANTALLA FINAL
-========================================== */
-.podium-grid { display:flex; gap:10px; justify-content:center; margin:15px 0; flex-wrap:wrap; }
-.badges-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px; }
-.honor-badge { background:#1a1d30; padding:12px; border-radius:8px; text-align:center; }
-.badge-trust   { color:var(--success); font-weight:bold; font-size:13px; margin-top:4px; }
-.badge-traitor { color:var(--neon-pink); font-weight:bold; font-size:13px; margin-top:4px; }
-
-.strategy-analysis-box { background:#16192b; border-top:3px solid var(--border-neon); padding:15px; border-radius:8px; margin-top:20px; }
-.analysis-content { font-size:13px; color:#cbd5e1; line-height:1.5; }
-.analysis-content h4 { color:var(--neon-yellow); margin:12px 0 6px 0; }
-.analysis-content p  { margin-bottom:8px; }
-
-/* ==========================================
-   LOBBY / LOGO
-========================================== */
-.logo-area   { text-align:center; padding:30px 0 20px; }
-.duck-avatar { font-size:48px; margin-bottom:10px; }
-.subtitle    { color:var(--text-muted); font-size:14px; margin-top:6px; }
-.status-text { margin-top:12px; font-size:13px; color:var(--text-muted); text-align:center; }
-.small-text  { font-size:12px; color:var(--text-muted); }
-.mafia-badge { background:#1a1d30; border-radius:8px; padding:15px; margin:15px 0; }
-
-/* ==========================================
-   ANIMACIONES
-========================================== */
-@keyframes fadeIn  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-@keyframes scaleUp { from { transform:scale(0.3); } to { transform:scale(1); } }
-@keyframes blink   { 0%,100% { border-color:var(--neon-pink); } 50% { border-color:transparent; } }
-@keyframes spin    { to { transform:rotate(360deg); } }
-
-/* ==========================================
-   RESPONSIVE MÓVIL
+   RESPONSIVE MÓVIL (ADMIN OPTIMIZADO)
 ========================================== */
 @media (max-width: 420px) {
     #game-container { padding: 10px; }
-    .stat-val       { font-size: 13px; }
-    .reveal-title   { font-size: 20px; }
-    .reveal-graphic { font-size: 44px; }
-    .badges-grid    { grid-template-columns: 1fr; }
-    /* Admin en móvil: una columna */
+    button { font-size: 14px; padding: 12px; }
+    .stat-val { font-size: 14px; }
+    .ranking-table th, .ranking-table td { padding: 6px 4px; font-size: 11px; }
+    .admin-status-info { flex-direction: column; align-items: flex-start; gap: 2px; }
+    .badges-grid { grid-template-columns: 1fr; }
     .admin-btn-grid { grid-template-columns: 1fr; }
-    .btn-admin-end,
-    .btn-admin-reset { grid-column: span 1; }
-    .admin-status-row { flex-direction: column; align-items: flex-start; gap: 3px; }
-    .ranking-table th,
-    .ranking-table td { padding: 5px 3px; font-size: 11px; }
+    .btn-danger-admin { grid-column: span 1; }
 }

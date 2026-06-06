@@ -11,11 +11,7 @@
 <body>
 <div id="game-container">
 
-    <!-- ==============================
-         PANTALLA 1: LOGIN
-    ============================== -->
     <section id="screen-login" class="screen active">
-
         <div class="logo-area" id="main-logo-area">
             <div class="duck-avatar neon-glow">🦆🕶️</div>
             <h1 class="neon-text">MAFIA DE PATOS</h1>
@@ -26,61 +22,62 @@
             <h3>Únete al Sindicato Clandestino</h3>
             <div class="form-group">
                 <label for="player-name">Tu Alias de Mafioso:</label>
-                <input type="text" id="player-name" placeholder="Ej. Al Patone, Cuak Capone..." maxlength="15">
+                <input type="text" id="player-name" placeholder="Ej. Al Patone..." maxlength="15">
             </div>
             <div class="admin-toggle-row">
                 <input type="checkbox" id="admin-toggle">
                 <label for="admin-toggle">Soy el Don (Profesor)</label>
             </div>
             <div id="admin-password-box" class="form-group hidden">
-                <label for="admin-password" style="color:var(--neon-pink);">Clave del Don:</label>
-                <input type="password" id="admin-password" placeholder="Contraseña secreta..." maxlength="30">
-                <p id="pass-error" class="pass-error hidden">❌ Clave incorrecta. Intenta de nuevo.</p>
+                <label for="admin-password">Clave del Don:</label>
+                <input type="password" id="admin-password" placeholder="Contraseña..." maxlength="30">
+                <p id="pass-error" class="pass-error hidden">❌ Clave Incorrecta.</p>
             </div>
             <button id="btn-join" class="btn-primary">Ingresar al Callejón</button>
             <div id="lobby-status" class="status-text">Esperando conexión...</div>
         </div>
 
-        <!-- PANEL DEL DON -->
         <div id="admin-panel" class="hidden">
             <div class="admin-status-bar card">
-                <div class="admin-status-row">
-                    <span class="admin-crown">👑 EL DON — PANEL MAESTRO</span>
+                <div class="admin-status-info">
+                    <span class="admin-crown">👑 EL DON (PANEL MAESTRO)</span>
                     <span id="admin-round-label" class="admin-phase-badge">Fase: LOGIN — Ronda 0/5</span>
                 </div>
-                <div class="admin-status-row">
+                <div class="admin-status-info">
                     <span>👥 Jugadores: <strong id="player-count">0</strong></span>
-                    <span id="admin-vote-count" class="admin-vote-info">Sin votos aún</span>
+                    <span id="admin-vote-count" class="admin-vote-info">Sin votos</span>
                 </div>
             </div>
 
             <div class="admin-controls card">
-                <h4 class="admin-section-title">⚡ Control de Partida</h4>
+                <h4 class="admin-section-title">⚡ Control de Partida Global</h4>
                 <div class="admin-btn-grid">
-                    <button id="btn-start-game"       class="btn-admin-blue">🎯 Asignar Familias</button>
-                    <button id="btn-launch-dashboard" class="btn-admin-green hidden">▶ Lanzar Ronda</button>
-                    <button id="btn-force-resolve"    class="btn-admin-orange hidden">⚡ Forzar Resolución</button>
-                    <button id="btn-admin-next"        class="btn-admin-purple hidden">⏭ Siguiente Ronda</button>
-                    <button id="btn-end-game-now"      class="btn-admin-end hidden">🏁 Terminar Partida Ya</button>
-                    <button id="btn-reset-game"        class="btn-admin-reset">🔄 Reset → Lobby</button>
+                    <button id="btn-start-game" class="btn-primary-admin">🎯 Asignar Familias</button>
+                    <button id="btn-launch-dashboard" class="btn-success-admin">▶ Lanzar Ronda</button>
+                    <button id="btn-force-resolve" class="btn-force">⚡ Forzar Resolución</button>
+                    <button id="btn-admin-next" class="btn-next-admin">⏭ Siguiente Ronda</button>
+                    <button id="btn-end-game-now" class="btn-end">🏁 Terminar Partida Ya</button>
+                    <button id="btn-reset-game" class="btn-danger-admin">🔄 Volver al Lobby (Reset)</button>
                 </div>
             </div>
 
             <div class="card" id="war-map-box">
                 <h4 class="admin-section-title">🗺️ Mapa de Guerra del Don</h4>
-                <div class="war-map-legend">
-                    <span class="legend-item" style="color:#10b981">🤝 Cooperar</span>
-                    <span class="legend-item" style="color:#ff0055">🗡️ Traicionar</span>
-                    <span class="legend-item" style="color:#ffcc00">🥷 Robar</span>
-                    <span class="legend-item" style="color:#00ffff">📜 Alianza</span>
-                </div>
                 <div class="svg-container">
                     <svg id="war-map-svg" viewBox="0 0 400 400">
                         <defs>
-                            <marker id="arrow-cooperar"   viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#10b981"/></marker>
-                            <marker id="arrow-traicionar" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ff0055"/></marker>
-                            <marker id="arrow-robar"      viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffcc00"/></marker>
-                            <marker id="arrow-alianza"    viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00ffff"/></marker>
+                            <marker id="arrow-cooperar" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M0,0 L10,5 L0,10 z" fill="#10b981"/>
+                            </marker>
+                            <marker id="arrow-traicionar" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M0,0 L10,5 L0,10 z" fill="#ff0055"/>
+                            </marker>
+                            <marker id="arrow-robar" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M0,0 L10,5 L0,10 z" fill="#ffcc00"/>
+                            </marker>
+                            <marker id="arrow-alianza" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M0,0 L10,5 L0,10 z" fill="#00ffff"/>
+                            </marker>
                         </defs>
                         <g id="svg-connections"></g>
                         <g id="svg-nodes"></g>
@@ -93,7 +90,7 @@
                 <div class="table-responsive">
                     <table class="ranking-table">
                         <thead>
-                            <tr><th>Mafia</th><th>💰</th><th>⭐</th><th>👑</th><th>🗳️ Voto</th></tr>
+                            <tr><th>Mafia</th><th>💰 Fondos</th><th>⭐ Rep.</th><th>👑 Inf.</th><th>🗳️ Tendencia</th></tr>
                         </thead>
                         <tbody id="admin-mafia-tbody"></tbody>
                     </table>
@@ -107,30 +104,22 @@
         </div>
     </section>
 
-    <!-- ==============================
-         PANTALLA 2: ASIGNACIÓN
-    ============================== -->
     <section id="screen-assignment" class="screen">
         <div class="card text-center">
             <h2 class="neon-text">ASIGNANDO SINDICATOS</h2>
-            <div style="font-size:52px; margin:15px 0;">🦆💼🕵️</div>
-            <p>El algoritmo del Don te está ubicando en una familia...</p>
-            <div class="mafia-badge" style="margin:15px 0;">
+            <div id="assigned-mafia-card" class="mafia-badge">
                 <h3 id="assigned-mafia-name">Cargando...</h3>
-                <p>Tu Rol: Ejecutor del Cuac</p>
+                <p>Tu Rol: Miembro Ejecutivo</p>
             </div>
-            <div class="form-group hidden" id="naming-box">
-                <label>¡Eres el líder fundador! Bautiza tu Mafia:</label>
+            <div class="form-group mafia-naming-input hidden" id="naming-box">
+                <label>Bautiza a tu Mafia:</label>
                 <input type="text" id="custom-mafia-name" placeholder="Ej. Los Soprano" maxlength="20">
                 <button id="btn-save-mafia-name" class="btn-success">Confirmar Identidad</button>
             </div>
-            <p class="small-text" style="margin-top:12px;">Esperando que el Don lance la primera ronda...</p>
+            <p class="small-text">Esperando que el Don inicie las hostilidades...</p>
         </div>
     </section>
 
-    <!-- ==============================
-         PANTALLA 3: DASHBOARD
-    ============================== -->
     <section id="screen-dashboard" class="screen">
         <header class="game-header">
             <div class="player-info">
@@ -155,66 +144,31 @@
         </div>
 
         <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">💰</div>
-                <div class="stat-val" id="stat-money">$0</div>
-                <div class="stat-lbl">Dinero</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">⭐</div>
-                <div class="stat-val" id="stat-rep">100%</div>
-                <div class="stat-lbl">Reputación</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">👑</div>
-                <div class="stat-val" id="stat-inf">0</div>
-                <div class="stat-lbl">Influencia</div>
-            </div>
+            <div class="stat-card"><div class="stat-val" id="stat-money">$0</div><div class="stat-lbl">Dinero</div></div>
+            <div class="stat-card"><div class="stat-val" id="stat-rep">100%</div><div class="stat-lbl">Reputación</div></div>
+            <div class="stat-card"><div class="stat-val" id="stat-inf">0</div><div class="stat-lbl">Influencia</div></div>
         </div>
 
         <main class="action-area">
             <div id="panel-voting" class="card">
                 <h3>💼 Decisiones Estratégicas</h3>
-                <p class="small-text" style="margin-bottom:12px; color:var(--text-muted);">
-                    Tu mafia ejecutará la acción más votada por sus miembros.
-                </p>
-                <div class="form-group">
+                <div class="target-selector-box" style="margin-bottom:15px;">
                     <label for="target-mafia">Sindicato Objetivo:</label>
-                    <select id="target-mafia"></select>
+                    <select id="target-mafia" class="form-control"></select>
                 </div>
                 <div class="voting-options-grid">
-                    <button class="btn-action" data-action="cooperar">
-                        <span class="act-icon">🤝</span>
-                        <strong>Cooperar</strong>
-                        <span class="act-desc">Ganancias mutuas estables. Sube reputación.</span>
-                    </button>
-                    <button class="btn-action" data-action="traicionar">
-                        <span class="act-icon">🗡️</span>
-                        <strong>Traicionar</strong>
-                        <span class="act-desc">Roba fondos masivos. Destruye reputación.</span>
-                    </button>
-                    <button class="btn-action" data-action="robar">
-                        <span class="act-icon">🥷</span>
-                        <strong>Robar Recursos</strong>
-                        <span class="act-desc">Quita Influencia a la mafia objetivo.</span>
-                    </button>
-                    <button class="btn-action" data-action="alianza">
-                        <span class="act-icon">📜</span>
-                        <strong>Pacto Temporal</strong>
-                        <span class="act-desc">Si ambos aceptan, bonificador mutuo.</span>
-                    </button>
+                    <button class="btn-action" data-action="cooperar"><strong>🤝 Cooperar</strong></button>
+                    <button class="btn-action" data-action="traicionar"><strong>🗡️ Traicionar</strong></button>
+                    <button class="btn-action" data-action="robar"><strong>🥷 Robar Recursos</strong></button>
+                    <button class="btn-action" data-action="alianza"><strong>📜 Pacto Temporal</strong></button>
                 </div>
                 <div id="vote-status" class="vote-status-text">No has emitido tu voto secreto.</div>
             </div>
 
             <div id="panel-waiting-results" class="card hidden text-center">
                 <div class="spinner"></div>
-                <h3>Votos Consolidados</h3>
-                <p class="small-text" style="margin-top:8px; color:var(--text-muted);">
-                    Esperando que las demás mafias cierren sus tratos...
-                </p>
+                <h3>Votos Consolidados en la Red Clandestina</h3>
                 <div class="internal-votes-box">
-                    <h4>Votos en tu Familia:</h4>
                     <ul id="internal-votes-list"></ul>
                 </div>
             </div>
@@ -224,70 +178,34 @@
             <h4>📊 Monitor de la Ciudad</h4>
             <div class="table-responsive">
                 <table class="ranking-table">
-                    <thead>
-                        <tr><th>Mafia</th><th>Dinero</th><th>Rep.</th><th>Inf.</th><th>—</th></tr>
-                    </thead>
+                    <thead><tr><th>Mafia</th><th>Dinero</th><th>Reputación</th><th>Influencia</th></tr></thead>
                     <tbody id="live-ranking-body"></tbody>
                 </table>
             </div>
         </section>
     </section>
 
-    <!-- ==============================
-         PANTALLA 4: TRANSICIÓN
-    ============================== -->
     <section id="screen-transition" class="screen">
         <div class="fullscreen-reveal">
             <div class="reveal-title">¡TRANSACCIONES COMPUTADAS!</div>
-            <div class="reveal-graphic">💥 🦆 💥</div>
             <div class="card">
                 <h3>Reporte del Hampa — Ronda <span id="rep-ronda-num">1</span></h3>
                 <div id="round-narrative-log" class="narrative-log"></div>
-                <p class="small-text text-center" style="margin-top:12px; color:var(--text-muted);">
-                    Esperando que el Don inicie la siguiente ronda...
-                </p>
             </div>
         </div>
     </section>
 
-    <!-- ==============================
-         PANTALLA 5: FIN DEL JUEGO (Sincronizada con app.js)
-    ============================== -->
     <section id="screen-end" class="screen">
-        <div class="card text-center">
+        <div class="card final-card text-center">
             <h1 class="neon-text-red">FIN DEL IMPERIO</h1>
-            <h2 style="margin:10px 0; font-size:18px;">🏆 GANADOR: <span id="winner-name" class="neon-text">---</span> 🏆</h2>
-
-            <!-- El podio dinámico se inyectará aquí -->
-            <div id="final-podium" style="margin: 20px 0;"></div>
-
+            <h2>🏆 GANADOR: <span id=\"winner-mafia-name\" class=\"neon-text\">---</span> 🏆</h2>
+            <div id="final-podium" class="podium-grid"></div>
             <div class="badges-grid">
-                <div class="honor-badge">
-                    <div style="font-size:28px;">😇</div>
-                    <h4>Más Confiable</h4>
-                    <p id="badge-trust-name" class="badge-trust">---</p>
-                </div>
-                <div class="honor-badge">
-                    <div style="font-size:28px;">🐍</div>
-                    <h4>Mayor Traidor</h4>
-                    <p id="badge-traitor-name" class="badge-traitor">---</p>
-                </div>
+                <div class="honor-badge"><h4>😇 Más Confiable</h4><p id="badge-trust-name">---</p></div>
+                <div class="honor-badge"><h4>🐍 Mayor Traidor</h4><p id="badge-traitor-name">---</p></div>
             </div>
-
-            <div class="strategy-analysis-box text-left">
-                <h3 class="neon-text" style="font-size:15px;">📈 Análisis: Teoría de Juegos</h3>
-                <div class="analysis-content">
-                    <h4>Dilema del Prisionero Repetido</h4>
-                    <p>Cuando dos mafias cooperaban mutuamente, alcanzaban un <em>Óptimo de Pareto</em>. El incentivo individual para la traición generaba ventajas a corto plazo desestabilizando los acuerdos.</p>
-                    <h4>Reputación Dinámica</h4>
-                    <p>Las mafias con baja Reputación experimentaron aislamiento sistémico, demostrando el impacto a largo plazo de las decisiones egoístas en economías cerradas.</p>
-                </div>
-            </div>
-
-            <!-- Solo visible para el admin -->
-            <button id="btn-host-reset-final" class="btn-admin-reset hidden" style="margin-top:15px;">
-                🔄 Nueva Partida — Todos al Login
-            </button>
+            
+            <button id="btn-host-reset-final" class="btn-primary hidden" style="margin-top: 15px;">🔄 Nueva Partida (Solo Don)</button>
         </div>
     </section>
 
