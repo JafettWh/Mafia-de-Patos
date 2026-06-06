@@ -777,40 +777,64 @@ function renderEndScreen() {
 // ==========================================
 function masterActionStartGame() {
     try { SoundEffects.play('click'); } catch(e){}
-    db.ref('game_room/players').once('value', s => {
-        const pObj = s.val(); if (!pObj) return alert("Sin jugadores.");
-        const keys = Object.keys(pObj);
+    
+    // 1. Limpiamos primero el nodo de mafias viejo en Firebase para evitar conflictos de datos
+    db.ref('game_room/mafias').remove(() => {
         
-        // REDUCCIÓN DE 7 A 4 SINDICATOS DEFINITIVOS
-        const TOTAL = 4;
-        const nombresSindicatos = {
-            1: "Sindicato del Este 🦆",
-            2: "Sindicato del Oeste 🦆",
-            3: "Clan del Norte 🦆",
-            4: "Clan del Sur 🦆"
-        };
-
-        const config = {}, upd = {};
-        for (let m=1; m<=TOTAL; m++) {
-            config[`mafia_${m}`] = { 
-                id:`mafia_${m}`, 
-                name: nombresSindicatos[m], 
-                money:1200, 
-                reputation:100, 
-                influence:50, 
-                leaderId:"" 
+        db.ref('game_room/players').once('value', s => {
+            const pObj = s.val(); 
+            if (!pObj) return alert("Sin jugadores en el callejón.");
+            
+            const keys = Object.keys(pObj);
+            const TOTAL_SINDICATOS = 4;
+            
+            // Nombres base iniciales
+            const nombresSindicatos = {
+                1: "Sindicato Alfa 🦆",
+                2: "Sindicato Beta 🦆",
+                3: "Sindicato Gamma 🦆",
+                4: "Sindicato Delta 🦆"
             };
-        }
-        
-        // El algoritmo distribuye automáticamente a los jugadores entre los 4 sindicatos
-        keys.forEach((pId, i) => {
-            const mId = `mafia_${(i % TOTAL)+1}`;
-            upd[`players/${pId}/mafiaId`] = mId;
-            if (!config[mId].leaderId) config[mId].leaderId = pId;
+
+            const config = {};
+            const upd = {};
+
+            // 2. Creamos la estructura limpia para los 4 sindicatos
+            for (let m = 1; m <= TOTAL_SINDICATOS; m++) {
+                config[`mafia_${m}`] = { 
+                    id: `mafia_${m}`, 
+                    name: nombresSindicatos[m], 
+                    money: 1200, 
+                    reputation: 100, 
+                    influence: 50, 
+                    leaderId: "" 
+                };
+            }
+
+            // 3. Distribuimos los jugadores de forma equitativa
+            keys.forEach((pId, i) => {
+                const mId = `mafia_${(i % TOTAL_SINDICATOS) + 1}`;
+                upd[`players/${pId}/mafiaId`] = mId;
+                
+                // Si el sindicato no tiene líder asignado aún, este jugador se convierte en el Jefe
+                if (!config[mId].leaderId) {
+                    config[mId].leaderId = pId;
+                }
+            });
+
+            // 4. Subimos la nueva configuración unificada a Firebase
+            upd['mafias'] = config; 
+            upd['currentPhase'] = 'ASSIGNMENT'; 
+            upd['round'] = 1;
+            
+            db.ref('game_room').update(upd, (error) => {
+                if (error) {
+                    console.error("Error al iniciar el juego:", error);
+                } else {
+                    console.log("¡Partida de 4 sindicatos iniciada con éxito!");
+                }
+            });
         });
-        
-        upd['mafias'] = config; upd['currentPhase'] = 'ASSIGNMENT'; upd['round'] = 1;
-        db.ref('game_room').update(upd);
     });
 }
 
