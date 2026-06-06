@@ -90,8 +90,20 @@ const ACTION_ICONS  = { cooperar:'🤝', traicionar:'🗡️', robar:'🥷', ali
 // El host siempre se queda en screen-login
 // ==========================================
 function changeScreen(id) {
-    if (isHost && id !== 'screen-login') return;
-    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+    if (isHost && id !== 'screen-login') return; // El host no cambia de pantalla
+    
+    document.querySelectorAll('.screen').forEach(s => {
+        const isOpen = s.id === id;
+        s.classList.toggle('active', isOpen);
+        
+        // Refuerzo: Asegurar que las pantallas inactivas no interfieran 
+        // y la pantalla activa no herede bloqueos visuales ajenos.
+        if (isOpen) {
+            s.style.display = 'block'; 
+        } else {
+            s.style.display = 'none';
+        }
+    });
 }
 
 // ==========================================
@@ -267,11 +279,13 @@ function initTutorialLogic() {
 
     function updateUI() {
         document.querySelectorAll('.tutorial-step').forEach(s => {
-            s.style.display = parseInt(s.dataset.step) === step ? 'block' : 'none';
+            // Forzar visualización correcta de los pasos internos del tutorial
+            s.style.setProperty('display', parseInt(s.dataset.step) === step ? 'block' : 'none', 'important');
         });
         btnPrev.style.display = step === 1 ? 'none' : '';
         btnNext.innerText = step === total ? "¡Entendido! 🦆" : "Siguiente →";
     }
+    // ... resto del código sin cambios[cite: 1]
 
     btnNext.onclick = () => {
         SoundEffects.play('click');

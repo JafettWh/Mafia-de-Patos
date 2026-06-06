@@ -22,14 +22,15 @@ body {
     color: var(--text-light);
     display: flex;
     justify-content: center;
-    min-height: 100dvh;
+    min-height: 100vh; /* Cambiado de 100dvh a 100vh */
+    width: 100%;       /* Asegura el ancho completo */
     overflow-x: hidden;
 }
 
 #game-container {
     width: 100%;
     max-width: 500px;
-    min-height: 100dvh;
+    min-height: 100vh; /* Cambiado de 100dvh a 100vh */
     padding: 15px;
     position: relative;
 }
