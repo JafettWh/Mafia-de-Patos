@@ -13,7 +13,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const ADMIN_PASSWORD = "profe2025";
+const ADMIN_PASSWORD = "profe2026";
 
 let myPlayerId = null, myPlayerName = "", myMafiaId = null, myMafiaName = "", isHost = false, globalGameState = {}, timerInterval = null;
 let lastProcessedPhase = ""; // Bandera para evitar bucles infinitos de renderizado
