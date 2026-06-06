@@ -11,10 +11,27 @@
         /* Ajustes de optimización para visualización en celulares */
         body, html { overflow-x: hidden; max-width: 100vw; }
         .mafia-chat-container { margin-top: 12px; }
-        input, select, button { font-size: 16px !important; } /* Evita el zoom automático molesto en iOS/Android */
+        input, select, button { font-size: 16px !important; } /* Evita zoom molesto en iOS */
+        
+        .btn-action.selected {
+            background: var(--neon-pink) !important;
+            border-color: #ffffff !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 15px var(--neon-pink) !important;
+            transform: scale(1.02);
+            animation: pulse 1s infinite alternate;
+        }
+        @keyframes pulse { from { opacity: 0.85; } to { opacity: 1; } }
+
+        /* Estilos para el desglose de miembros */
+        .mafia-members-list { font-size: 11px; color: #94a3b8; list-style: none; padding: 0; margin-top: 4px; }
+        .mafia-members-list li { padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.02); }
+        .leader-tag { color: var(--neon-yellow); font-weight: bold; font-size: 10px; margin-left: 3px; }
+
         @media (max-width: 600px) {
             .admin-btn-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
             #admin-espionage-box > div { grid-template-columns: 1fr !important; gap: 12px !important; }
+            .chats-layout-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
         }
     </style>
 </head>
@@ -25,7 +42,6 @@
          PANTALLA 1: LOGIN
     ============================== -->
     <section id="screen-login" class="screen active">
-
         <div class="logo-area" id="main-logo-area">
             <div class="duck-avatar neon-glow">🦆🕶️</div>
             <h1 class="neon-text">MAFIA DE PATOS</h1>
@@ -67,7 +83,7 @@
             <div class="admin-controls card">
                 <h4 class="admin-section-title">⚡ Control de Partida</h4>
                 <div class="admin-btn-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                    <button id="btn-start-game"       class="btn-admin-blue">🎯 Asignar Familias</button>
+                    <button id="btn-start-game"       class="btn-admin-blue">🎯 Asignar 4 Sindicatos</button>
                     <button id="btn-launch-dashboard" class="btn-admin-green hidden">▶ Lanzar Ronda</button>
                     <button id="btn-force-resolve"    class="btn-admin-orange hidden">⚡ Forzar Resolución</button>
                     <button id="btn-admin-next"        class="btn-admin-purple hidden">⏭ Siguiente Ronda</button>
@@ -98,7 +114,7 @@
                 </div>
             </div>
 
-            <!-- NUEVO: MONITOR DE ESPIONAJE AVANZADO DEL DON -->
+            <!-- MONITOR DE ESPIONAJE AVANZADO DEL DON -->
             <div class="card" id="admin-espionage-box">
                 <h4 class="admin-section-title">🕵️‍♂️ Centro de Inteligencia del Don (Espionaje)</h4>
                 <div class="form-group">
@@ -108,9 +124,6 @@
                         <option value="mafia_2">Sindicato Plumas 2</option>
                         <option value="mafia_3">Sindicato Plumas 3</option>
                         <option value="mafia_4">Sindicato Plumas 4</option>
-                        <option value="mafia_5">Sindicato Plumas 5</option>
-                        <option value="mafia_6">Sindicato Plumas 6</option>
-                        <option value="mafia_7">Sindicato Plumas 7</option>
                     </select>
                 </div>
                 
@@ -119,14 +132,18 @@
                     <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 6px; border: 1px solid rgba(0, 255, 204, 0.2);">
                         <h5 style="color: var(--neon-cyan); margin-bottom: 8px; font-size:13px; font-weight: bold;">Votos Internos Infiltrados:</h5>
                         <ul id="admin-spy-votes" style="list-style: none; padding: 0; font-size: 13px; line-height: 1.6; max-height:150px; overflow-y:auto;">
-                            <li style="color:var(--text-muted);">Selecciona una mafia para interceptar votos...</li>
+                            <li style="color:var(--text-muted);">Selecciona una mafia para interceptar...</li>
                         </ul>
                     </div>
-                    <!-- Radio de chat intervenida -->
-                    <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 6px; border: 1px solid rgba(255, 0, 85, 0.2);">
-                        <h5 style="color: var(--neon-pink); margin-bottom: 8px; font-size:13px; font-weight: bold;">Línea de Chat Intervenida:</h5>
-                        <div id="admin-spy-chat" style="height: 150px; overflow-y: auto; font-size: 13px; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 4px; line-height: 1.4;">
-                            <p style="color:var(--text-muted);">Escuchando transmisiones de radio clandestinas...</p>
+                    <!-- Radios intervenidas (Equipo / Líderes) -->
+                    <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 6px; border: 1px solid rgba(255, 0, 85, 0.2); display: flex; flex-direction: column; gap: 10px;">
+                        <div>
+                            <h5 style="color: var(--neon-pink); margin-bottom: 4px; font-size:12px; font-weight: bold;">📻 Chat Interno del Grupo:</h5>
+                            <div id="admin-spy-chat" style="height: 90px; overflow-y: auto; font-size: 12px; background: rgba(0,0,0,0.4); padding: 5px; border-radius: 4px;"></div>
+                        </div>
+                        <div>
+                            <h5 style="color: var(--neon-yellow); margin-bottom: 4px; font-size:12px; font-weight: bold;">👑 Cumbre Secreta de Líderes:</h5>
+                            <div id="admin-spy-global-chat" style="height: 90px; overflow-y: auto; font-size: 12px; background: rgba(0,0,0,0.4); padding: 5px; border-radius: 4px; color: #fef08a;"></div>
                         </div>
                     </div>
                 </div>
@@ -161,35 +178,36 @@
                 <div class="tutorial-step active-step" data-step="1">
                     <div class="tutorial-icon">🦆💼</div>
                     <h3>1. ¿De qué trata esto?</h3>
-                    <p>Eres miembro de un <strong>Sindicato de Patos</strong>. El objetivo principal es acumular la mayor cantidad de <strong>Dinero (💰)</strong> al finalizar las 5 rondas para consolidar tu control sobre la ciudad.</p>
+                    <p>Eres miembro de uno de los <strong>4 Sindicatos de Patos</strong> de la ciudad. El objetivo principal es acumular la mayor cantidad de <strong>Dinero (💰)</strong> tras 5 rondas estratégicas.</p>
                 </div>
                 <div class="tutorial-step" data-step="2">
                     <div class="tutorial-icon">🤝 vs 🗡️</div>
                     <h3>2. El Dilema del Hampa</h3>
-                    <p>Cada ronda elegirás en secreto una acción hacia otra mafia rival. Tus ganancias dependen directamente de lo que AMBOS elijan:</p>
-                    <ul class="tutorial-list" style="list-style-type: none; padding-left: 0; text-align: left; margin-top: 10px;">
-                        <li style="margin-bottom: 8px;"><strong>🤝 Si ambos Cooperan:</strong> El mercado progresa de forma estable. Ambos ganan dinero seguro (💰 +$400 base).</li>
-                        <li style="margin-bottom: 8px;"><strong>🗡️ Si tú Traicionas y el otro Coopera:</strong> ¡Te quedas con todo! Tú ganas el botín mayor (💰 +$800) y el rival pierde capital (📉 -$400).</li>
-                        <li style="margin-bottom: 8px;"><strong>🗡️ Si ambos Traicionan:</strong> Conflicto en las calles. Nadie obtiene ganancias y se destruye la reputación mutua.</li>
+                    <p>Cada ronda elegirás en secreto una acción hacia otra mafia rival. Tus ganancias dependen de lo que AMBOS elijan:</p>
+                    <ul class="tutorial-list" style="list-style-type: none; padding-left: 0; text-align: left; margin-top: 10px; font-size:13px;">
+                        <li style="margin-bottom: 6px;"><strong>🤝 Ambos Cooperan:</strong> El mercado progresa. Ambos ganan dinero seguro (💰 +$400 base).</li>
+                        <li style="margin-bottom: 6px;"><strong>🗡️ Tú Traicionas y el otro Coopera:</strong> ¡Te quedas todo! Ganas el botín (💰 +$800) y el rival pierde (📉 -$400).</li>
+                        <li style="margin-bottom: 6px;"><strong>🗡️ Ambos Traicionan:</strong> Conflicto abierto. Nadie gana nada y pierden reputación.</li>
                     </ul>
                 </div>
                 <div class="tutorial-step" data-step="3">
                     <div class="tutorial-icon">👑⭐</div>
-                    <h3>3. Reputación e Influencia</h3>
-                    <p>El estatus en el bajo mundo también determina tu eficiencia:</p>
-                    <ul class="tutorial-list" style="list-style-type: none; padding-left: 0; text-align: left; margin-top: 10px;">
-                        <li style="margin-bottom: 8px;"><strong>Reputación (⭐):</strong> Sube al cooperar y cae drásticamente al traicionar. A menor reputación, tus ganancias por cooperar se reducen proporcionalmente.</li>
-                        <li style="margin-bottom: 8px;"><strong>Influencia (👑):</strong> Determina el control político. Puedes usar la acción de <strong>Robar (🥷)</strong> para drenar la influencia de tus rivales, o proponer un <strong>Pacto (📜)</strong>.</li>
+                    <h3>3. Jerarquía y Diplomacia</h3>
+                    <p>El estatus en el bajo mundo determina tu eficiencia:</p>
+                    <ul class="tutorial-list" style="list-style-type: none; padding-left: 0; text-align: left; margin-top: 10px; font-size:13px;">
+                        <li style="margin-bottom: 6px;"><strong>Reputación (⭐):</strong> Cae drásticamente al traicionar. A menor reputación, ganas menos dinero al cooperar.</li>
+                        <li style="margin-bottom: 6px;"><strong>Influencia (👑):</strong> Permite usar la acción de <strong>Robar (🥷)</strong> para drenar el poder rival, o proponer un <strong>Pacto (📜)</strong>.</li>
                     </ul>
                 </div>
                 <div class="tutorial-step" data-step="4">
                     <div class="tutorial-icon">🗳️💬</div>
-                    <h3>4. Democracia Criminal y Espionaje</h3>
-                    <p>¡No juegas solo! Estás agrupado con otros mafiosos en tu sindicato:</p>
-                    <ul class="tutorial-list" style="list-style-type: none; padding-left: 0; text-align: left; margin-top: 10px;">
-                        <li style="margin-bottom: 8px;"><strong>La Mayoría Manda:</strong> La acción que ejecute tu sindicato contra el rival será la que reciba más votos dentro de tu propio grupo.</li>
-                        <li style="margin-bottom: 8px;"><strong>Sin Votos Anónimos:</strong> Tus compañeros de familia verán exactamente por qué opción y por qué objetivo votaste en tiempo real.</li>
-                        <li style="margin-bottom: 8px;"><strong>Chat del Sindicato:</strong> Usa el chat seguro integrado abajo para debatir, coordinar ataques o mentir antes de emitir tu voto secreto.</li>
+                    <h3>4. Democracia Criminal y Roles</h3>
+                    <p>¡El poder está distribuido!</p>
+                    <ul class="tutorial-list" style="list-style-type: none; padding-left: 0; text-align: left; margin-top: 10px; font-size:13px;">
+                        <li style="margin-bottom: 6px;"><strong>La Mayoría Manda:</strong> Tu sindicato ejecutará la acción que reciba más votos internos de sus integrantes.</li>
+                        <li style="margin-bottom: 6px;"><strong>Inteligencia de Campo:</strong> Ahora podrás ver en vivo qué mafiosos integran cada sindicato en el monitor de abajo.</li>
+                        <li style="margin-bottom: 6px;"><strong>El Rol del Líder:</strong> El primer jugador asignado a la mafia será el Líder. Tendrá acceso exclusivo a una <strong>Línea Telefónica Roja (Chat Global de Líderes)</strong> para negociar directamente con los jefes de las otras mafias.</li>
+                        <li style="margin-bottom: 6px;"><strong>Reunete con los miembros de tu mismo sindicato</strong></li>
                     </ul>
                 </div>
             </div>
@@ -208,13 +226,13 @@
         <div class="card text-center">
             <h2 class="neon-text">ASIGNANDO SINDICATOS</h2>
             <div style="font-size:52px; margin:15px 0;">🦆💼🕵️</div>
-            <p>El algoritmo del Don te está ubicando en una familia...</p>
+            <p>El algoritmo del Don te está ubicando en una de las 4 familias...</p>
             <div class="mafia-badge" style="margin:15px 0;">
                 <h3 id="assigned-mafia-name">Cargando...</h3>
-                <p>Tu Rol: Miembro del Sindicato</p>
+                <p id="assigned-player-role">Tu Rol: Miembro del Sindicato</p>
             </div>
             <div class="form-group hidden" id="naming-box">
-                <label>¡Eres el líder fundador! Bautiza tu Mafia:</label>
+                <label>¡Eres el Caporegime (Líder)! Bautiza tu Mafia:</label>
                 <input type="text" id="custom-mafia-name" placeholder="Ej. Los Soprano" maxlength="20">
                 <button id="btn-save-mafia-name" class="btn-success">Confirmar Identidad</button>
             </div>
@@ -231,7 +249,7 @@
                 <span class="avatar">🦆</span>
                 <div>
                     <h4 id="dash-player-name">---</h4>
-                    <small id="dash-mafia-name">---</small>
+                    <small id="dash-mafia-name">---</small> <span id="dash-leader-badge" class="leader-tag hidden">👑 LÍDER</span>
                 </div>
             </div>
             <div class="timer-box">
@@ -270,7 +288,7 @@
             <div id="panel-voting" class="card">
                 <h3>💼 Decisiones Estratégicas</h3>
                 <p class="small-text" style="margin-bottom:12px; color:var(--text-muted);">
-                    Tu mafia ejecutará la acción más votada por sus miembros.
+                    Tu mafia ejecutará la acción que obtenga la mayoría absoluta de votos de tu equipo.
                 </p>
                 <div class="form-group">
                     <label for="target-mafia">Sindicato Objetivo:</label>
@@ -314,22 +332,37 @@
             </div>
         </main>
 
-        <!-- CHAT CLANDESTINO DE MAFIA -->
-        <section class="card mafia-chat-container" style="margin-top:15px; display:flex; flex-direction:column; max-height:250px;">
-            <h4 style="color: var(--neon-pink); margin-bottom:5px;">💬 Canal Seguro del Sindicato</h4>
-            <div id="mafia-chat-messages" style="flex-grow:1; overflow-y:auto; background:rgba(0,0,0,0.3); padding:8px; border-radius:4px; min-height:100px; font-size:13px; margin-bottom:5px;"></div>
-            <div style="display:flex; gap:5px;">
-                <input type="text" id="mafia-chat-input" placeholder="Escribe un mensaje cifrado a tu grupo..." style="flex-grow:1; padding:8px; background:#0f172a; border:1px solid var(--border-neon); color:#fff; border-radius:4px;" maxlength="100">
-                <button id="btn-mafia-chat-send" class="btn-success" style="padding:0 15px; border-radius:4px;">Enviar</button>
-            </div>
-        </section>
+        <!-- SECCIÓN DE CHATS INTEGRADOS (SINDICATO + CONTROL DE LÍDERES) -->
+        <div class="chats-layout-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+            <!-- CHAT 1: CANAL SEGURO INTERNO -->
+            <section class="card mafia-chat-container" style="display:flex; flex-direction:column; max-height:240px; margin: 0;">
+                <h4 style="color: var(--neon-pink); margin-bottom:5px; font-size:13px;">💬 Canal del Sindicato (Equipo)</h4>
+                <div id="mafia-chat-messages" style="flex-grow:1; overflow-y:auto; background:rgba(0,0,0,0.3); padding:8px; border-radius:4px; min-height:90px; font-size:12px; margin-bottom:5px;"></div>
+                <div style="display:flex; gap:5px;">
+                    <input type="text" id="mafia-chat-input" placeholder="Mensaje a tu equipo..." style="flex-grow:1; padding:6px; background:#0f172a; border:1px solid var(--border-neon); color:#fff; border-radius:4px; font-size:13px !important;" maxlength="100">
+                    <button id="btn-mafia-chat-send" class="btn-success" style="padding:0 10px; border-radius:4px; font-size:13px;">Enviar</button>
+                </div>
+            </section>
 
+            <!-- CHAT 2: CUMBRE GLOBAL DE LÍDERES (SÓLO LÍDERES) -->
+            <section id="global-leader-chat-box" class="card mafia-chat-container hidden" style="display:flex; flex-direction:column; max-height:240px; margin: 0; border: 1px solid var(--neon-yellow);">
+                <h4 style="color: var(--neon-yellow); margin-bottom:5px; font-size:13px;">👑 Línea Roja Secreta (Cumbre de Líderes)</h4>
+                <div id="global-leader-messages" style="flex-grow:1; overflow-y:auto; background:rgba(0,0,0,0.4); padding:8px; border-radius:4px; min-height:90px; font-size:12px; margin-bottom:5px; color: #fef08a;"></div>
+                <div style="display:flex; gap:5px;">
+                    <input type="text" id="global-leader-input" placeholder="Negocia con otros jefes..." style="flex-grow:1; padding:6px; background:#0f172a; border:1px solid var(--neon-yellow); color:#fff; border-radius:4px; font-size:13px !important;" maxlength="100">
+                    <button id="btn-global-leader-send" class="btn-admin-purple" style="padding:0 10px; border-radius:4px; font-size:13px; color:#fff;">Pactar</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- MONITOR DE LA CIUDAD CON DESGLOSE DE MIEMBROS -->
         <section class="live-ranking card" style="margin-top:15px;">
-            <h4>📊 Monitor de la Ciudad</h4>
+            <h4>📊 Monitor de la Ciudad e Inteligencia de Campo</h4>
+            <p class="small-text" style="color: var(--text-muted); margin-bottom: 8px;">Revisa las finanzas globales y quiénes integran cada cartel rival en tiempo real.</p>
             <div class="table-responsive">
                 <table class="ranking-table">
                     <thead>
-                        <tr><th>Mafia</th><th>Dinero</th><th>Rep.</th><th>Inf.</th><th>—</th></tr>
+                        <tr><th>Sindicato / Miembros</th><th>Dinero</th><th>Rep.</th><th>Inf.</th></tr>
                     </thead>
                     <tbody id="live-ranking-body"></tbody>
                 </table>
@@ -348,7 +381,7 @@
                 <h3>Reporte del Hampa — Ronda <span id="rep-ronda-num">1</span></h3>
                 <div id="round-narrative-log" class="narrative-log"></div>
                 <p class="small-text text-center" style="margin-top:12px; color:var(--text-muted);">
-                    Esperando que el Don inicie la siguiente ronda...
+                    Esperando que el Don ordene la apertura de la siguiente ronda...
                 </p>
             </div>
         </div>
@@ -381,7 +414,7 @@
                 <h3 class="neon-text" style="font-size:15px;">📈 Análisis: Teoría de Juegos</h3>
                 <div class="analysis-content">
                     <h4>Dilema del Prisionero Repetido</h4>
-                    <p>Cuando dos mafias cooperaban mutuamente, alcanzaban un <em>Óptimo de Pareto</em>. El incentivo individual para la traición generaba ventajas a corto plazo desestabilizando los acuerdos.</p>
+                    <p>Cuando dos mafias cooperaban, alcanzaban un <em>Óptimo de Pareto</em>. El incentivo individual para la traición generaba ventajas a corto plazo desestabilizando los acuerdos.</p>
                     <h4>Reputación Dinámica</h4>
                     <p>Las mafias con baja Reputación experimentaron aislamiento sistémico, demostrando el impacto a largo plazo de las decisiones egoístas en economías cerradas.</p>
                 </div>
