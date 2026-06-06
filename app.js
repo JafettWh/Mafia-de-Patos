@@ -780,16 +780,35 @@ function masterActionStartGame() {
     db.ref('game_room/players').once('value', s => {
         const pObj = s.val(); if (!pObj) return alert("Sin jugadores.");
         const keys = Object.keys(pObj);
-        const TOTAL = 7;
+        
+        // REDUCCIÓN DE 7 A 4 SINDICATOS DEFINITIVOS
+        const TOTAL = 4;
+        const nombresSindicatos = {
+            1: "Sindicato del Este 🦆",
+            2: "Sindicato del Oeste 🦆",
+            3: "Clan del Norte 🦆",
+            4: "Clan del Sur 🦆"
+        };
+
         const config = {}, upd = {};
         for (let m=1; m<=TOTAL; m++) {
-            config[`mafia_${m}`] = { id:`mafia_${m}`, name:`Sindicato ${m}`, money:1200, reputation:100, influence:50, leaderId:"" };
+            config[`mafia_${m}`] = { 
+                id:`mafia_${m}`, 
+                name: nombresSindicatos[m], 
+                money:1200, 
+                reputation:100, 
+                influence:50, 
+                leaderId:"" 
+            };
         }
+        
+        // El algoritmo distribuye automáticamente a los jugadores entre los 4 sindicatos
         keys.forEach((pId, i) => {
             const mId = `mafia_${(i % TOTAL)+1}`;
             upd[`players/${pId}/mafiaId`] = mId;
             if (!config[mId].leaderId) config[mId].leaderId = pId;
         });
+        
         upd['mafias'] = config; upd['currentPhase'] = 'ASSIGNMENT'; upd['round'] = 1;
         db.ref('game_room').update(upd);
     });
