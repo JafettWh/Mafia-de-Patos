@@ -86,22 +86,18 @@ const ACTION_LABELS = { cooperar:'🤝 Cooperar', traicionar:'🗡️ Traicionar
 const ACTION_ICONS  = { cooperar:'🤝', traicionar:'🗡️', robar:'🥷', alianza:'📜' };
 
 // ==========================================
-// CAMBIO DE PANTALLA
-// El host siempre se queda en screen-login
+// CAMBIO DE PANTALLA (Corregido para evitar pantalla negra)
 // ==========================================
 function changeScreen(id) {
-    if (isHost && id !== 'screen-login') return; // El host no cambia de pantalla
+    if (isHost && id !== 'screen-login') return;
     
     document.querySelectorAll('.screen').forEach(s => {
-        const isOpen = s.id === id;
-        s.classList.toggle('active', isOpen);
-        
-        // Refuerzo: Asegurar que las pantallas inactivas no interfieran 
-        // y la pantalla activa no herede bloqueos visuales ajenos.
-        if (isOpen) {
-            s.style.display = 'block'; 
+        if (s.id === id) {
+            s.classList.add('active');
+            s.style.display = 'block'; // Fuerza el renderizado
         } else {
-            s.style.display = 'none';
+            s.classList.remove('active');
+            s.style.display = 'none';  // Oculta por completo los demás bloques
         }
     });
 }
@@ -228,7 +224,7 @@ function showConfirmModal(message, onConfirm) {
 }
 
 // ==========================================
-// LOGIN
+// LOGIN (Corregido para ocultar elementos adecuadamente)
 // ==========================================
 function setupLogin() {
     const nameIn = document.getElementById('player-name').value.trim();
@@ -259,10 +255,13 @@ function setupLogin() {
         document.getElementById('admin-panel').classList.remove('hidden');
         document.getElementById('lobby-status').classList.add('hidden');
         updateAdminButtonVisibility('LOGIN');
-        // Iniciar espionaje de chat tras un momento
         setTimeout(() => initAdminSpyChatStreams('mafia_1'), 800);
     } else {
-        // FIX: Mostrar tutorial pero sin bloquear recepción de fases
+        // CORRECCIÓN: Ocultamos completamente los elementos visuales del login
+        document.getElementById('main-logo-area').classList.add('hidden');
+        document.getElementById('lobby-status').classList.add('hidden');
+        
+        // Lanzamos de forma limpia el tutorial
         changeScreen('screen-tutorial');
         initTutorialLogic();
     }
@@ -279,19 +278,16 @@ function initTutorialLogic() {
 
     function updateUI() {
         document.querySelectorAll('.tutorial-step').forEach(s => {
-            // Forzar visualización correcta de los pasos internos del tutorial
-            s.style.setProperty('display', parseInt(s.dataset.step) === step ? 'block' : 'none', 'important');
+            s.style.display = parseInt(s.dataset.step) === step ? 'block' : 'none';
         });
         btnPrev.style.display = step === 1 ? 'none' : '';
         btnNext.innerText = step === total ? "¡Entendido! 🦆" : "Siguiente →";
     }
-    // ... resto del código sin cambios[cite: 1]
 
     btnNext.onclick = () => {
         SoundEffects.play('click');
         if (step < total) { step++; updateUI(); }
         else {
-            // FIX: al salir del tutorial, revisar si ya hay fase activa
             const phase = globalGameState.currentPhase || 'LOGIN';
             const phaseKey = `${phase}_${globalGameState.round || 0}`;
             lastProcessedPhaseKey = ""; // resetear para forzar re-sync
@@ -303,6 +299,8 @@ function initTutorialLogic() {
                 syncGamePhase('DASHBOARD');
             } else {
                 changeScreen('screen-login');
+                // Mostramos de nuevo los elementos si vuelve a login por falta de fase
+                document.getElementById('main-logo-area').classList.remove('hidden');
                 document.getElementById('lobby-status').innerText = "¡Listo! Esperando sindicato...";
                 document.getElementById('lobby-status').classList.remove('hidden');
             }
@@ -320,7 +318,6 @@ function listenToGlobalState() {
         const data = snapshot.val() || {};
         globalGameState = data;
 
-        // FIX: actualizar myMafiaId en cuanto llegue del server
         if (myPlayerId && data.players?.[myPlayerId] && myMafiaId === null) {
             const sid = data.players[myPlayerId].mafiaId;
             if (sid && sid !== "sin_asignar") myMafiaId = sid;
@@ -338,12 +335,10 @@ function listenToGlobalState() {
             return;
         }
 
-        // FIX: no bloquear si está en el tutorial — procesar igual
         if (lastProcessedPhaseKey !== phaseKey) {
-            // Si sigue en tutorial y la fase cambia a ASSIGNMENT, esperar que salga del tutorial
-            const inTutorial = document.getElementById('screen-tutorial').classList.contains('active');
+            const inTutorial = document.getElementById('screen-tutorial').classList.contains('active') || 
+                               document.getElementById('screen-tutorial').style.display === 'block';
             if (inTutorial && phase !== 'LOGIN') {
-                // Guardar fase para aplicar al salir del tutorial
                 return;
             }
             lastProcessedPhaseKey = phaseKey;
@@ -406,14 +401,12 @@ function updateAdminPanel(data) {
         log.innerHTML = (data.lastRoundLogs||[]).map(t=>`<p>${escapeHTML(t)}</p>`).join("") || '<p class="text-muted">Sin operaciones.</p>';
     }
 
-    // Spy select
     const spySel = document.getElementById('admin-spy-target');
     if (spySel && data.mafias) {
         const prev = spySel.value;
         spySel.innerHTML = Object.values(data.mafias).map(m =>
             `<option value="${m.id}"${m.id===prev?' selected':''}>${escapeHTML(m.name)}</option>`
         ).join("");
-        // Actualizar votos de espionaje
         const spyVotes = document.getElementById('admin-spy-votes');
         const fV = Object.values(data.votes?.[`ronda_${data.round}`]||{}).filter(v=>v.mafiaSource===spySel.value);
         spyVotes.innerHTML = fV.length === 0
@@ -524,7 +517,6 @@ function drawWarMap(data) {
 function syncGamePhase(phase) {
     if (phase === 'LOGIN') {
         if (!myPlayerId) return;
-        // Limpiar estado local
         myMafiaId = null; myMafiaName = ""; myPlayerId = null; myPlayerName = "";
         lastProcessedPhaseKey = "";
         mafiaNameListenerActive = false;
@@ -532,6 +524,7 @@ function syncGamePhase(phase) {
         if (timerInterval) clearInterval(timerInterval);
         if (chatListenerRef) chatListenerRef.off();
         if (globalLeaderListenerRef) globalLeaderListenerRef.off();
+        
         changeScreen('screen-login');
         document.getElementById('admin-login-area').classList.remove('hidden');
         document.getElementById('main-logo-area').classList.remove('hidden');
@@ -542,7 +535,6 @@ function syncGamePhase(phase) {
     }
 
     if (phase === 'ASSIGNMENT') {
-        // FIX: esperar a que myMafiaId esté disponible con retry
         if (!myMafiaId) {
             setTimeout(() => {
                 const sid = globalGameState.players?.[myPlayerId]?.mafiaId;
@@ -589,7 +581,6 @@ function setupMafiaNameListener() {
         document.getElementById('naming-box')?.classList.toggle('hidden', !isLeader);
     });
 
-    // Botón guardar nombre — clonar para evitar listeners duplicados
     const btn = document.getElementById('btn-save-mafia-name');
     const newBtn = btn.cloneNode(true);
     btn.parentNode.replaceChild(newBtn, btn);
@@ -629,7 +620,6 @@ function renderDashboard() {
         document.getElementById('event-desc').innerText  = ev.desc;
     }
 
-    // Poblar selector de objetivo preservando selección previa
     const tSel = document.getElementById('target-mafia');
     const prev = tSel.value;
     tSel.innerHTML = "";
@@ -642,7 +632,6 @@ function renderDashboard() {
     });
     if (prev && tSel.querySelector(`option[value="${prev}"]`)) tSel.value = prev;
 
-    // Resetear paneles
     document.getElementById('panel-voting').classList.remove('hidden');
     document.getElementById('panel-waiting-results').classList.add('hidden');
     document.getElementById('vote-status').innerText = "Selecciona una acción para votar.";
@@ -710,6 +699,9 @@ function listenMafiaChat() {
     });
 }
 
+// ==========================================
+// ENVIAR CHAT DE MAFIA
+// ==========================================
 function sendMafiaChatMessage() {
     const i = document.getElementById('mafia-chat-input');
     const t = i.value.trim(); if (!t || !myMafiaId) return;
@@ -748,7 +740,6 @@ function renderEndScreen() {
     changeScreen('screen-end'); SoundEffects.play('victoria');
     const arr = Object.values(globalGameState.mafias||{}).sort((a,b)=>b.money-a.money);
 
-    // FIX: id correcto según el HTML
     const winEl = document.getElementById('winner-name');
     if (winEl) winEl.innerText = arr.length>0 ? arr[0].name.toUpperCase() : "SIN GANADOR";
 
@@ -779,7 +770,6 @@ function masterActionStartGame() {
     db.ref('game_room/players').once('value', s => {
         const pObj = s.val(); if (!pObj) return alert("Sin jugadores.");
         const keys = Object.keys(pObj);
-        // FIX: 7 mafias (no 4)
         const TOTAL = 7;
         const config = {}, upd = {};
         for (let m=1; m<=TOTAL; m++) {

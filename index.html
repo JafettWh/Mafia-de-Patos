@@ -11,9 +11,6 @@
 <body>
 <div id="game-container">
 
-    <!-- ==============================
-         MODAL: CONFIRMACIÓN DE VOTO
-    ============================== -->
     <div id="vote-confirm-modal" class="modal-overlay hidden">
         <div class="modal-box">
             <div id="modal-vote-icon" class="modal-icon">🤝</div>
@@ -28,9 +25,6 @@
         </div>
     </div>
 
-    <!-- ==============================
-         MODAL: CONFIRMACIÓN GENERAL (ADMIN)
-    ============================== -->
     <div id="confirm-modal" class="modal-overlay hidden">
         <div class="modal-box">
             <div class="modal-icon">⚠️</div>
@@ -43,9 +37,6 @@
         </div>
     </div>
 
-    <!-- ==============================
-         PANTALLA: LOGIN
-    ============================== -->
     <div id="screen-login" class="screen active">
         <div id="main-logo-area" class="text-center">
             <h1>🦆 Mafia de Patos</h1>
@@ -67,7 +58,6 @@
         </div>
         <p id="lobby-status" class="text-center mt-2 text-muted"></p>
 
-        <!-- PANEL DEL DON -->
         <div id="admin-panel" class="hidden mt-2">
             <div class="card border-admin">
                 <h2 class="text-center text-neon-pink">👑 Consola del Don</h2>
@@ -126,10 +116,7 @@
         </div>
     </div>
 
-    <!-- ==============================
-         PANTALLA: TUTORIAL
-    ============================== -->
-    <div id="screen-tutorial" class="screen hidden">
+    <div id="screen-tutorial" class="screen hidden" style="display: none;">
         <div class="card text-center">
             <h2>📖 Reglas del Bajo Mundo</h2>
             <div class="tutorial-step" data-step="1">
@@ -160,10 +147,7 @@
         </div>
     </div>
 
-    <!-- ==============================
-         PANTALLA: ASIGNACIÓN
-    ============================== -->
-    <div id="screen-assignment" class="screen hidden text-center">
+    <div id="screen-assignment" class="screen hidden text-center" style="display: none;">
         <div class="card border-neon">
             <h2>Fuiste asignado a:</h2>
             <h1 id="assigned-mafia-name" class="text-neon-cyan mt-1" style="font-size:1.8rem; word-break:break-word;">...</h1>
@@ -177,10 +161,7 @@
         </div>
     </div>
 
-    <!-- ==============================
-         PANTALLA: DASHBOARD
-    ============================== -->
-    <div id="screen-dashboard" class="screen hidden">
+    <div id="screen-dashboard" class="screen hidden" style="display: none;">
         <div class="header-dash flex-between">
             <div>
                 <h3 id="dash-mafia-name" class="text-neon-cyan m-0">Mafia</h3>
@@ -204,7 +185,6 @@
             <p id="event-desc" class="m-0 text-sm text-black"></p>
         </div>
 
-        <!-- Panel de votación -->
         <div class="card mt-1" id="panel-voting">
             <h3 class="mb-1">🎯 Centro de Operaciones</h3>
             <label class="text-sm">Sindicato Objetivo:</label>
@@ -218,14 +198,12 @@
             <p id="vote-status" class="text-center text-sm mt-1 text-muted">Selecciona una acción para votar.</p>
         </div>
 
-        <!-- Panel de espera tras votar -->
         <div class="card mt-1 hidden text-center" id="panel-waiting-results">
             <h3 class="text-success">✅ Voto Registrado</h3>
             <ul id="internal-votes-list" class="list-none text-sm mt-1 text-left"></ul>
             <p class="text-center text-sm mt-1 text-muted animate-pulse">Esperando fin de ronda...</p>
         </div>
 
-        <!-- Chat de sindicato -->
         <div class="card mt-1 chat-container">
             <h3>💬 Chat de Sindicato (Privado)</h3>
             <div id="mafia-chat-messages" class="chat-box"></div>
@@ -235,7 +213,6 @@
             </div>
         </div>
 
-        <!-- Chat de líderes (solo líder) -->
         <div id="global-leader-chat-box" class="card mt-1 chat-container hidden border-admin">
             <h3 class="text-neon-yellow">🌐 Teléfono Rojo (Solo Jefes)</h3>
             <div id="global-leader-messages" class="chat-box"></div>
@@ -245,7 +222,6 @@
             </div>
         </div>
 
-        <!-- Ranking en vivo -->
         <div class="card mt-1 mb-2">
             <h3>🏆 Ranking en Vivo</h3>
             <div class="table-responsive">
@@ -257,10 +233,7 @@
         </div>
     </div>
 
-    <!-- ==============================
-         PANTALLA: TRANSICIÓN
-    ============================== -->
-    <div id="screen-transition" class="screen hidden text-center">
+    <div id="screen-transition" class="screen hidden text-center" style="display: none;">
         <div class="card border-neon">
             <h2>📰 Fin de la Ronda <span id="rep-ronda-num"></span></h2>
             <p class="text-muted text-sm mt-1">El Periódico del Bajo Mundo</p>
@@ -269,10 +242,7 @@
         </div>
     </div>
 
-    <!-- ==============================
-         PANTALLA: FIN DEL JUEGO
-    ============================== -->
-    <div id="screen-end" class="screen hidden text-center">
+    <div id="screen-end" class="screen hidden text-center" style="display: none;">
         <div class="card border-neon">
             <h1 class="text-neon-yellow" style="font-size:2rem;">🏆 FIN DEL JUEGO</h1>
             <h2 class="mt-1">EL SINDICATO DOMINANTE:</h2>
