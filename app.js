@@ -368,6 +368,16 @@ function listenToGlobalState() {
         }
 
         if (lastProcessedPhaseKey !== phaseKey) {
+            // Si la fase es LOGIN pero este cliente ya completó su login
+            // (tiene myPlayerId asignado), ignoramos este evento: solo
+            // significa que otro jugador se está uniendo al lobby, no que
+            // el Don haya hecho reset. Evita expulsar a jugadores ya
+            // dentro del tutorial/espera cuando entran nuevos jugadores.
+            if (phase === 'LOGIN' && myPlayerId) {
+                lastProcessedPhaseKey = phaseKey;
+                return;
+            }
+
             const tutScreen = document.getElementById('screen-tutorial');
             const inTutorial = tutScreen && (tutScreen.classList.contains('active') || tutScreen.style.display === 'block');
             if (inTutorial && phase !== 'LOGIN') {
