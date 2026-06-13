@@ -10,30 +10,30 @@ const firebaseConfig = {
     appId: "1:32475436802:web:7c3d0011c40bdd11a9541b",
     databaseURL: "https://mafia-de-patos-a9e22-default-rtdb.firebaseio.com"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-
 const ADMIN_PASSWORD = "profe2025";
 
 // ==========================================
 // ESTADO GLOBAL
 // ==========================================
-let myPlayerId = null;
-let myPlayerName = "";
-let myMafiaId = null;
-let myMafiaName = "";
-let isHost = false;
-let globalGameState = {};
-let timerInterval = null;
+let myPlayerId         = null;
+let myPlayerName       = "";
+let myMafiaId          = null;
+let myMafiaName        = "";
+let isHost             = false;
+let globalGameState    = {};
+let timerInterval      = null;
 let lastProcessedPhaseKey = "";
 let mafiaNameListenerActive = false;
 let internalVotesListenerActive = false;
 
 // Referencias de listeners de chat (para limpiarlos)
-let chatListenerRef = null;
-let globalLeaderListenerRef = null;
-let adminSpyChatRef = null;
-let adminSpyGlobalRef = null;
+let chatListenerRef        = null;
+let globalLeaderListenerRef= null;
+let adminSpyChatRef        = null;
+let adminSpyGlobalRef      = null;
 
 // Confirmación de voto: guarda la acción pendiente antes de confirmar
 let pendingVoteAction = null;
@@ -65,11 +65,7 @@ const SoundEffects = {
             this.init();
             const osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
             osc.connect(gain); gain.connect(this.ctx.destination);
-            const c = {
-                click:{freq:400,vol:0.1,dur:0.05,type:'sine'},
-                traicion:{freq:140,vol:0.2,dur:0.35,type:'sawtooth'},
-                victoria:{freq:440,vol:0.15,dur:0.5,type:'sine'}
-            }[type];
+            const c = { click:{freq:400,vol:0.1,dur:0.05,type:'sine'}, traicion:{freq:140,vol:0.2,dur:0.35,type:'sawtooth'}, victoria:{freq:440,vol:0.15,dur:0.5,type:'sine'} }[type];
             if (!c) return;
             osc.type = c.type;
             osc.frequency.setValueAtTime(c.freq, this.ctx.currentTime);
@@ -80,31 +76,31 @@ const SoundEffects = {
 };
 
 const EVENTOS = [
-    { title:"MERCADO EN AUGE", desc:"Ganancias por Cooperación aumentan 50%.", code:"AUGE" },
-    { title:"REDADA POLICIAL", desc:"Traiciones descubiertas. El traidor pierde $500 extras.", code:"REDADA" },
+    { title:"MERCADO EN AUGE",  desc:"Ganancias por Cooperación aumentan 50%.", code:"AUGE" },
+    { title:"REDADA POLICIAL",  desc:"Traiciones descubiertas. El traidor pierde $500 extras.", code:"REDADA" },
     { title:"CRISIS ECONÓMICA", desc:"Todas las mafias pierden $200 al inicio.", code:"CRISIS" },
     { title:"LAVADO DE DINERO", desc:"+$10 por cada punto de influencia.", code:"LAVADO" }
 ];
 
-const ACTION_LABELS = { cooperar:'🤝 Cooperar', traicionar:'🗡 Traicionar', robar:'🥷 Robar Recursos', alianza:'📜 Pacto Temporal' };
-const ACTION_ICONS = { cooperar:'🤝', traicionar:'🗡', robar:'🥷', alianza:'📜' };
+const ACTION_LABELS = { cooperar:'🤝 Cooperar', traicionar:'🗡️ Traicionar', robar:'🥷 Robar Recursos', alianza:'📜 Pacto Temporal' };
+const ACTION_ICONS  = { cooperar:'🤝', traicionar:'🗡️', robar:'🥷', alianza:'📜' };
 
 // ==========================================
 // CAMBIO DE PANTALLA (Bypass de Estilos Forzado)
 // ==========================================
 function changeScreen(id) {
     if (isHost && id !== 'screen-login') return;
-
+    
     console.log("Cambiando de pantalla de forma segura a: " + id);
-
+    
     document.querySelectorAll('.screen').forEach(s => {
         if (s.id === id) {
             s.classList.add('active');
             s.classList.remove('hidden');
-            s.style.setProperty('display', 'block', 'important');
+            s.style.setProperty('display', 'block', 'important'); 
         } else {
             s.classList.remove('active');
-            s.style.setProperty('display', 'none', 'important');
+            s.style.setProperty('display', 'none', 'important');  
         }
     });
 }
@@ -157,7 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll('.btn-action').forEach(btn => {
         btn.addEventListener('click', () => {
             if (!myPlayerId || !myMafiaId) return;
-            const act = btn.getAttribute('data-action');
+            const act      = btn.getAttribute('data-action');
             const targetId = document.getElementById('target-mafia').value;
             const targetName = escapeHTML(globalGameState.mafias?.[targetId]?.name || targetId);
             try { SoundEffects.play('click'); } catch(e){}
@@ -202,7 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function showVoteConfirmModal(action, targetName) {
     document.getElementById('modal-vote-action').innerText = ACTION_LABELS[action];
     document.getElementById('modal-vote-target').innerText = targetName;
-    document.getElementById('modal-vote-icon').innerText = ACTION_ICONS[action];
+    document.getElementById('modal-vote-icon').innerText   = ACTION_ICONS[action];
     document.getElementById('vote-confirm-modal').classList.remove('hidden');
 }
 function hideVoteModal() {
@@ -247,18 +243,22 @@ function setupLogin() {
     myPlayerName = escapeHTML(nameIn);
     try { SoundEffects.play('click'); } catch(e){}
 
-    // El Don (admin) NO se registra como jugador: solo como espectador/iniciador.
+    const pRef = db.ref('game_room/players').push();
+    myPlayerId = pRef.key;
+    pRef.set({ name: myPlayerName, mafiaId: "sin_asignar", online: true, isHost });
+    pRef.onDisconnect().remove();
+
+    // Forzar ocultamiento absoluto de elementos de login para evitar solapamientos
+    const adminArea = document.getElementById('admin-login-area');
+    if (adminArea) adminArea.style.setProperty('display', 'none', 'important');
+    
+    const mainLogo = document.getElementById('main-logo-area');
+    if (mainLogo) mainLogo.style.setProperty('display', 'none', 'important');
+    
+    const lobbyStat = document.getElementById('lobby-status');
+    if (lobbyStat) lobbyStat.style.setProperty('display', 'none', 'important');
+
     if (isHost) {
-        // Forzar ocultamiento absoluto de elementos de login para evitar solapamientos
-        const adminArea = document.getElementById('admin-login-area');
-        if (adminArea) adminArea.style.setProperty('display', 'none', 'important');
-
-        const mainLogo = document.getElementById('main-logo-area');
-        if (mainLogo) mainLogo.style.setProperty('display', 'none', 'important');
-
-        const lobbyStat = document.getElementById('lobby-status');
-        if (lobbyStat) lobbyStat.style.setProperty('display', 'none', 'important');
-
         const adminPanel = document.getElementById('admin-panel');
         if (adminPanel) {
             adminPanel.classList.remove('hidden');
@@ -266,32 +266,15 @@ function setupLogin() {
         }
         updateAdminButtonVisibility('LOGIN');
         setTimeout(() => initAdminSpyChatStreams('mafia_1'), 800);
-        return;
-    }
-
-    // Jugador normal: se registra en /players
-    const pRef = db.ref('game_room/players').push();
-    myPlayerId = pRef.key;
-    pRef.set({ name: myPlayerName, mafiaId: "sin_asignar", online: true, isHost: false });
-    pRef.onDisconnect().remove();
-
-    // Forzar ocultamiento absoluto de elementos de login para evitar solapamientos
-    const adminArea = document.getElementById('admin-login-area');
-    if (adminArea) adminArea.style.setProperty('display', 'none', 'important');
-
-    const mainLogo = document.getElementById('main-logo-area');
-    if (mainLogo) mainLogo.style.setProperty('display', 'none', 'important');
-
-    const lobbyStat = document.getElementById('lobby-status');
-    if (lobbyStat) lobbyStat.style.setProperty('display', 'none', 'important');
-
-    changeScreen('screen-tutorial');
-    try {
-        initTutorialLogic();
-        const stepOne = document.querySelector('.tutorial-step[data-step="1"]');
-        if (stepOne) stepOne.style.setProperty('display', 'block', 'important');
-    } catch(e) {
-        console.error("Error en tutorial:", e);
+    } else {
+        changeScreen('screen-tutorial');
+        try {
+            initTutorialLogic();
+            const stepOne = document.querySelector('.tutorial-step[data-step="1"]');
+            if (stepOne) stepOne.style.setProperty('display', 'block', 'important');
+        } catch(e) {
+            console.error("Error en tutorial:", e);
+        }
     }
 }
 
@@ -318,7 +301,7 @@ function initTutorialLogic() {
         else {
             const phase = globalGameState.currentPhase || 'LOGIN';
             const phaseKey = `${phase}_${globalGameState.round || 0}`;
-            lastProcessedPhaseKey = "";
+            lastProcessedPhaseKey = ""; 
             if (phase === 'ASSIGNMENT' && myMafiaId) {
                 lastProcessedPhaseKey = phaseKey;
                 syncGamePhase('ASSIGNMENT');
@@ -326,19 +309,23 @@ function initTutorialLogic() {
                 lastProcessedPhaseKey = phaseKey;
                 syncGamePhase('DASHBOARD');
             } else {
-                // En lugar de volver al login, pasamos a la pantalla de espera
-                changeScreen('screen-waiting');
+                changeScreen('screen-login');
+                const mainLogo = document.getElementById('main-logo-area');
+                if (mainLogo) mainLogo.style.setProperty('display', 'block', 'important');
+                const lobbyStat = document.getElementById('lobby-status');
+                if (lobbyStat) {
+                    lobbyStat.innerText = "¡Listo! Esperando sindicato...";
+                    lobbyStat.style.setProperty('display', 'block', 'important');
+                }
             }
         }
     };
-
     if (btnPrev) {
-        btnPrev.onclick = () => {
+        btnPrev.onclick = () => { 
             try { SoundEffects.play('click'); } catch(e){}
-            if (step > 1) { step--; updateUI(); }
+            if (step > 1) { step--; updateUI(); } 
         };
     }
-
     updateUI();
 }
 
@@ -355,7 +342,7 @@ function listenToGlobalState() {
             if (sid && sid !== "sin_asignar") myMafiaId = sid;
         }
 
-        const phase = data.currentPhase || 'LOGIN';
+        const phase    = data.currentPhase || 'LOGIN';
         const phaseKey = `${phase}_${data.round || 0}`;
 
         if (isHost) {
@@ -384,12 +371,12 @@ function listenToGlobalState() {
 // ==========================================
 function updateAdminButtonVisibility(phase) {
     const show = (id, v) => document.getElementById(id)?.classList.toggle('hidden', !v);
-    show('btn-start-game', phase === 'LOGIN');
+    show('btn-start-game',       phase === 'LOGIN');
     show('btn-launch-dashboard', phase === 'ASSIGNMENT');
-    show('btn-force-resolve', phase === 'DASHBOARD');
-    show('btn-admin-next', phase === 'TRANSITION');
-    show('btn-end-game-now', ['DASHBOARD','TRANSITION','ASSIGNMENT'].includes(phase));
-    show('btn-reset-game', true);
+    show('btn-force-resolve',    phase === 'DASHBOARD');
+    show('btn-admin-next',       phase === 'TRANSITION');
+    show('btn-end-game-now',     ['DASHBOARD','TRANSITION','ASSIGNMENT'].includes(phase));
+    show('btn-reset-game',       true);
 }
 
 // ==========================================
@@ -399,7 +386,6 @@ function renderMafiaTable(tableId, data, isAdmin) {
     const tbody = document.getElementById(tableId);
     if (!tbody || !data.mafias) return;
     tbody.innerHTML = "";
-
     Object.values(data.mafias).sort((a, b) => b.money - a.money).forEach(m => {
         let members = "";
         Object.keys(data.players || {}).forEach(pId => {
@@ -409,9 +395,7 @@ function renderMafiaTable(tableId, data, isAdmin) {
             }
         });
         if (!members) members = `<li class="text-muted">Sin personal</li>`;
-
         const lastCol = isAdmin ? `<td>${getVoteInfoForMafia(data, m.id)}</td>` : '';
-
         tbody.innerHTML += `<tr>
             <td><strong>${escapeHTML(m.name)}</strong><ul class="mafia-members-list">${members}</ul></td>
             <td class="text-success font-bold">$${m.money}</td>
@@ -427,9 +411,7 @@ function renderMafiaTable(tableId, data, isAdmin) {
 // ==========================================
 function updateAdminPanel(data) {
     document.getElementById('admin-round-label').innerText = `Fase: ${data.currentPhase||'LOGIN'} — Ronda ${data.round||0}/5`;
-
-    // Solo contamos jugadores reales (no al Don/admin) para el conteo de votos
-    const tP = data.players ? Object.values(data.players).filter(p => !p.isHost).length : 0;
+    const tP = data.players ? Object.keys(data.players).length : 0;
     const tV = (data.round && data.votes?.[`ronda_${data.round}`]) ? Object.keys(data.votes[`ronda_${data.round}`]).length : 0;
     document.getElementById('admin-vote-count').innerText = `Votos: ${tV} / ${tP}`;
 
@@ -444,7 +426,6 @@ function updateAdminPanel(data) {
         spySel.innerHTML = Object.values(data.mafias).map(m =>
             `<option value="${m.id}"${m.id===prev?' selected':''}>${escapeHTML(m.name)}</option>`
         ).join("");
-
         const spyVotes = document.getElementById('admin-spy-votes');
         const fV = Object.values(data.votes?.[`ronda_${data.round}`]||{}).filter(v=>v.mafiaSource===spySel.value);
         spyVotes.innerHTML = fV.length === 0
@@ -456,11 +437,9 @@ function updateAdminPanel(data) {
 function initAdminSpyChatStreams(mafiaId) {
     if (adminSpyChatRef) adminSpyChatRef.off();
     if (adminSpyGlobalRef) adminSpyGlobalRef.off();
-
     const bInt = document.getElementById('admin-spy-chat');
     const bGlob = document.getElementById('admin-spy-global-chat');
     if (!bInt || !bGlob) return;
-
     bInt.innerHTML = ""; bGlob.innerHTML = "";
     const r = globalGameState.round || 1;
 
@@ -484,7 +463,7 @@ function getVoteInfoForMafia(data, mafiaId) {
     if (v.length === 0) return '<span class="text-muted">Pensando...</span>';
     const counts = {}; v.forEach(x => counts[x.action] = (counts[x.action]||0)+1);
     const top = Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0];
-    const icons = { cooperar:'🤝 Coop', traicionar:'🗡 Traic', robar:'🥷 Robo', alianza:'📜 Pac' };
+    const icons = { cooperar:'🤝 Coop', traicionar:'🗡️ Traic', robar:'🥷 Robo', alianza:'📜 Pac' };
     return `<span class="vote-badge-${top}">${icons[top]} (${v.length}v)</span>`;
 }
 
@@ -498,10 +477,9 @@ function drawWarMap(data) {
     nG.innerHTML = ""; cG.innerHTML = "";
 
     const mafias = Object.values(data.mafias).sort((a,b)=>a.id.localeCompare(b.id));
-    const total = mafias.length;
+    const total  = mafias.length;
     const cx=200, cy=200, r=130;
     const coords = {};
-
     mafias.forEach((m,i) => {
         const a = (i * 2*Math.PI/total) - Math.PI/2;
         coords[m.id] = { x: cx+r*Math.cos(a), y: cy+r*Math.sin(a), name: m.name };
@@ -519,46 +497,35 @@ function drawWarMap(data) {
         const { counts, target } = pAct[src];
         const top = Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0];
         if (!coords[src] || !coords[target] || src === target) return;
-
         const p = document.createElementNS("http://www.w3.org/2000/svg","path");
         p.setAttribute("d",`M ${coords[src].x} ${coords[src].y} L ${coords[target].x} ${coords[target].y}`);
         p.setAttribute("stroke", colorMap[top]||'#64748b');
         p.setAttribute("stroke-width","2.5");
         p.setAttribute("fill","none");
         p.setAttribute("marker-end",`url(#arrow-${top})`);
-
         if (top==='traicionar'||top==='robar') {
             p.setAttribute("stroke-dasharray","8,4");
             const anim = document.createElementNS("http://www.w3.org/2000/svg","animate");
             anim.setAttribute("attributeName","stroke-dashoffset");
-            anim.setAttribute("values","100;0");
-            anim.setAttribute("dur","1.2s");
-            anim.setAttribute("repeatCount","indefinite");
-            p.appendChild(anim);
+            anim.setAttribute("values","100;0"); anim.setAttribute("dur","1.2s");
+            anim.setAttribute("repeatCount","indefinite"); p.appendChild(anim);
         } else { p.setAttribute("stroke-dasharray","5,5"); }
-
         cG.appendChild(p);
     });
 
     Object.keys(coords).forEach(id => {
         const g = document.createElementNS("http://www.w3.org/2000/svg","g");
         const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
-        c.setAttribute("cx",coords[id].x);
-        c.setAttribute("cy",coords[id].y);
+        c.setAttribute("cx",coords[id].x); c.setAttribute("cy",coords[id].y);
         c.setAttribute("r","22");
         c.setAttribute("fill", pAct[id]?"#1e293b":"#0f172a");
         c.setAttribute("stroke", pAct[id]?"#00ffcc":"#334155");
         c.setAttribute("stroke-width","2");
-
         const t = document.createElementNS("http://www.w3.org/2000/svg","text");
-        t.setAttribute("x",coords[id].x);
-        t.setAttribute("y",coords[id].y+4);
-        t.setAttribute("text-anchor","middle");
-        t.setAttribute("fill","#fff");
-        t.setAttribute("font-size","8px");
-        t.setAttribute("font-weight","bold");
+        t.setAttribute("x",coords[id].x); t.setAttribute("y",coords[id].y+4);
+        t.setAttribute("text-anchor","middle"); t.setAttribute("fill","#fff");
+        t.setAttribute("font-size","8px"); t.setAttribute("font-weight","bold");
         t.textContent = coords[id].name.substring(0,7);
-
         g.appendChild(c); g.appendChild(t); nG.appendChild(g);
     });
 }
@@ -576,13 +543,13 @@ function syncGamePhase(phase) {
         if (timerInterval) clearInterval(timerInterval);
         if (chatListenerRef) chatListenerRef.off();
         if (globalLeaderListenerRef) globalLeaderListenerRef.off();
-
+        
         changeScreen('screen-login');
         const adminArea = document.getElementById('admin-login-area');
         if (adminArea) adminArea.style.setProperty('display', 'block', 'important');
         const mainLogo = document.getElementById('main-logo-area');
         if (mainLogo) mainLogo.style.setProperty('display', 'block', 'important');
-
+        
         document.getElementById('lobby-status').innerText = "";
         document.getElementById('btn-join').disabled = false;
         document.getElementById('player-name').value = '';
@@ -631,7 +598,6 @@ function setupMafiaNameListener() {
         const el = document.getElementById('assigned-mafia-name');
         const roleEl = document.getElementById('assigned-player-role');
         if (el) el.innerText = escapeHTML(m.name);
-
         const isLeader = m.leaderId === myPlayerId;
         if (roleEl) roleEl.innerText = isLeader ? "Tu Rol: 👑 LÍDER SUPREMO" : "Tu Rol: Operativo";
         document.getElementById('naming-box')?.classList.toggle('hidden', !isLeader);
@@ -655,7 +621,7 @@ function setupMafiaNameListener() {
 function renderDashboard() {
     changeScreen('screen-dashboard');
     document.getElementById('dash-player-name').innerText = escapeHTML(myPlayerName);
-    document.getElementById('dash-mafia-name').innerText = escapeHTML(myMafiaName);
+    document.getElementById('dash-mafia-name').innerText  = escapeHTML(myMafiaName);
     document.getElementById('timer-label').innerText = `RONDA ${globalGameState.round||1}/5`;
 
     const isLeader = globalGameState.mafias?.[myMafiaId]?.leaderId === myPlayerId;
@@ -665,15 +631,15 @@ function renderDashboard() {
     db.ref(`game_room/mafias/${myMafiaId}`).on('value', s => {
         const m = s.val(); if (!m) return;
         document.getElementById('stat-money').innerText = `$${m.money}`;
-        document.getElementById('stat-rep').innerText = `${m.reputation}%`;
-        document.getElementById('stat-inf').innerText = m.influence;
+        document.getElementById('stat-rep').innerText   = `${m.reputation}%`;
+        document.getElementById('stat-inf').innerText   = m.influence;
     });
 
     const ev = globalGameState.currentEvent;
     document.getElementById('event-banner').classList.toggle('hidden', !ev);
     if (ev) {
         document.getElementById('event-title').innerText = ev.title;
-        document.getElementById('event-desc').innerText = ev.desc;
+        document.getElementById('event-desc').innerText  = ev.desc;
     }
 
     const tSel = document.getElementById('target-mafia');
@@ -721,16 +687,13 @@ function listenInternalVotes() {
         db.ref(`game_room/votes/ronda_${globalGameState.round}`).off();
     }
     internalVotesListenerActive = true;
-
     db.ref(`game_room/votes/ronda_${globalGameState.round}`).on('value', s => {
         const vObj = s.val()||{};
         const listUi = document.getElementById('internal-votes-list'); if (!listUi) return;
-
         listUi.innerHTML = Object.values(vObj)
             .filter(v => v.mafiaSource === myMafiaId)
             .map(v => `<li>📌 <strong>${escapeHTML(v.player)}</strong> → <span class="vote-badge-${v.action}">${ACTION_ICONS[v.action]} ${v.action}</span> contra <em>${escapeHTML(globalGameState.mafias?.[v.target]?.name||v.target)}</em></li>`)
             .join("");
-
         const voted = vObj[myPlayerId] !== undefined;
         document.getElementById('panel-voting').classList.toggle('hidden', voted);
         document.getElementById('panel-waiting-results').classList.toggle('hidden', !voted);
@@ -739,8 +702,7 @@ function listenInternalVotes() {
 
 function listenMafiaChat() {
     if (chatListenerRef) chatListenerRef.off();
-    const box = document.getElementById('mafia-chat-messages');
-    box.innerHTML = "";
+    const box = document.getElementById('mafia-chat-messages'); box.innerHTML = "";
     chatListenerRef = db.ref(`game_room/chats/${myMafiaId}/ronda_${globalGameState.round}`);
     chatListenerRef.on('child_added', s => {
         const m = s.val(); if (!m) return;
@@ -761,8 +723,7 @@ function sendMafiaChatMessage() {
 
 function listenGlobalLeaderChat() {
     if (globalLeaderListenerRef) globalLeaderListenerRef.off();
-    const box = document.getElementById('global-leader-messages');
-    box.innerHTML = "";
+    const box = document.getElementById('global-leader-messages'); box.innerHTML = "";
     globalLeaderListenerRef = db.ref(`game_room/global_leader_chat/ronda_${globalGameState.round}`);
     globalLeaderListenerRef.on('child_added', s => {
         const m = s.val(); if (!m) return;
@@ -786,10 +747,10 @@ function sendGlobalLeaderMessage() {
 // PANTALLA DE CIERRE
 // ==========================================
 function renderEndScreen() {
-    changeScreen('screen-end');
+    changeScreen('screen-end'); 
     try { SoundEffects.play('victoria'); } catch(e){}
-
     const arr = Object.values(globalGameState.mafias||{}).sort((a,b)=>b.money-a.money);
+
     const winEl = document.getElementById('winner-name');
     if (winEl) winEl.innerText = arr.length>0 ? arr[0].name.toUpperCase() : "SIN GANADOR";
 
@@ -806,9 +767,8 @@ function renderEndScreen() {
     Object.keys(stats.traiciones||{}).forEach(id=>{ if(stats.traiciones[id]>mT){mT=stats.traiciones[id];tN=globalGameState.mafias?.[id]?.name||id;} });
     Object.keys(stats.cooperaciones||{}).forEach(id=>{ if(stats.cooperaciones[id]>mC){mC=stats.cooperaciones[id];cN=globalGameState.mafias?.[id]?.name||id;} });
 
-    document.getElementById('badge-trust-name').innerText = mC>0?`${escapeHTML(cN)} (${mC} veces)`:"Ninguno";
+    document.getElementById('badge-trust-name').innerText   = mC>0?`${escapeHTML(cN)} (${mC} veces)`:"Ninguno";
     document.getElementById('badge-traitor-name').innerText = mT>0?`${escapeHTML(tN)} (${mT} veces)`:"Ninguno";
-
     document.getElementById('btn-host-reset-final').classList.toggle('hidden', !isHost);
 }
 
@@ -817,20 +777,17 @@ function renderEndScreen() {
 // ==========================================
 function masterActionStartGame() {
     try { SoundEffects.play('click'); } catch(e){}
-
+    
     // 1. Limpiamos primero el nodo de mafias viejo en Firebase para evitar conflictos de datos
     db.ref('game_room/mafias').remove(() => {
-
+        
         db.ref('game_room/players').once('value', s => {
-            const pObj = s.val();
+            const pObj = s.val(); 
             if (!pObj) return alert("Sin jugadores en el callejón.");
-
-            // Excluimos al Don/admin del reparto (no debe contar como jugador)
-            const keys = Object.keys(pObj).filter(k => !pObj[k].isHost);
-            if (keys.length === 0) return alert("Sin jugadores en el callejón.");
-
+            
+            const keys = Object.keys(pObj);
             const TOTAL_SINDICATOS = 4;
-
+            
             // Nombres base iniciales
             const nombresSindicatos = {
                 1: "Sindicato Alfa 🦆",
@@ -844,21 +801,21 @@ function masterActionStartGame() {
 
             // 2. Creamos la estructura limpia para los 4 sindicatos
             for (let m = 1; m <= TOTAL_SINDICATOS; m++) {
-                config[`mafia_${m}`] = {
-                    id: `mafia_${m}`,
-                    name: nombresSindicatos[m],
-                    money: 1200,
-                    reputation: 100,
-                    influence: 50,
-                    leaderId: ""
+                config[`mafia_${m}`] = { 
+                    id: `mafia_${m}`, 
+                    name: nombresSindicatos[m], 
+                    money: 1200, 
+                    reputation: 100, 
+                    influence: 50, 
+                    leaderId: "" 
                 };
             }
 
-            // 3. Distribuimos los jugadores (sin contar al Don) de forma equitativa
+            // 3. Distribuimos los jugadores de forma equitativa
             keys.forEach((pId, i) => {
                 const mId = `mafia_${(i % TOTAL_SINDICATOS) + 1}`;
                 upd[`players/${pId}/mafiaId`] = mId;
-
+                
                 // Si el sindicato no tiene líder asignado aún, este jugador se convierte en el Jefe
                 if (!config[mId].leaderId) {
                     config[mId].leaderId = pId;
@@ -866,10 +823,10 @@ function masterActionStartGame() {
             });
 
             // 4. Subimos la nueva configuración unificada a Firebase
-            upd['mafias'] = config;
-            upd['currentPhase'] = 'ASSIGNMENT';
+            upd['mafias'] = config; 
+            upd['currentPhase'] = 'ASSIGNMENT'; 
             upd['round'] = 1;
-
+            
             db.ref('game_room').update(upd, (error) => {
                 if (error) {
                     console.error("Error al iniciar el juego:", error);
@@ -926,7 +883,6 @@ function resolveRoundLogic(goToEnd=false) {
         const mafias = game.mafias;
         const logs = [`--- RONDA ${game.round} ---`];
         const dec = {};
-
         Object.keys(mafias).forEach(mId => dec[mId] = { action:'cooperar', target:null, counts:{} });
 
         if (rV) {
@@ -946,7 +902,7 @@ function resolveRoundLogic(goToEnd=false) {
         Object.keys(mafias).forEach(mId => {
             const a = dec[mId].action;
             const t = dec[mId].target || Object.keys(mafias).find(x=>x!==mId);
-            st.traiciones[mId] = st.traiciones[mId]||0;
+            st.traiciones[mId]    = st.traiciones[mId]||0;
             st.cooperaciones[mId] = st.cooperaciones[mId]||0;
 
             if (a==='cooperar') {
@@ -955,14 +911,14 @@ function resolveRoundLogic(goToEnd=false) {
                 mafias[mId].money += Math.round(g);
                 mafias[mId].reputation = Math.min(100, mafias[mId].reputation+10);
                 st.cooperaciones[mId]++;
-                logs.push(`🕊 [${mafias[mId].name}] COOPERÓ. +$${Math.round(g)}`);
+                logs.push(`🕊️ [${mafias[mId].name}] COOPERÓ. +$${Math.round(g)}`);
             } else if (a==='traicionar') {
                 mafias[mId].money += 800;
                 mafias[mId].reputation = Math.max(10, mafias[mId].reputation-35);
                 if (mafias[t]) mafias[t].money = Math.max(0, mafias[t].money-400);
                 st.traiciones[mId]++;
                 if (game.currentEvent?.code==="REDADA") { mafias[mId].money-=500; logs.push(`🚨 REDADA: [${mafias[mId].name}] penalizado -$500.`); }
-                logs.push(`🗡 TRAICIÓN: [${mafias[mId].name}] atacó a [${mafias[t]?.name||'Rival'}].`);
+                logs.push(`🗡️ TRAICIÓN: [${mafias[mId].name}] atacó a [${mafias[t]?.name||'Rival'}].`);
             } else if (a==='robar') {
                 mafias[mId].influence += 20;
                 if (mafias[t]) mafias[t].influence = Math.max(0, mafias[t].influence-20);
@@ -973,7 +929,6 @@ function resolveRoundLogic(goToEnd=false) {
                     logs.push(`📜 PACTO: [${mafias[mId].name}] y [${mafias[t].name}]. +$600 c/u`);
                 } else logs.push(`⚠️ Alianza fallida de [${mafias[mId].name}].`);
             }
-
             if (game.currentEvent?.code==="CRISIS") mafias[mId].money = Math.max(0, mafias[mId].money-200);
         });
 
