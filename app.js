@@ -205,6 +205,50 @@ function hideVoteModal() {
     document.getElementById('vote-confirm-modal').classList.add('hidden');
 }
 
+
+function returnToLoginScreen() {
+    // Reset local player state
+    myPlayerId = null;
+    myPlayerName = "";
+    myMafiaId = null;
+    myMafiaName = "";
+    isHost = false;
+
+    // Clear UI fields
+    const playerNameInput = document.getElementById('player-name');
+    if (playerNameInput) playerNameInput.value = '';
+
+    const adminPasswordInput = document.getElementById('admin-password');
+    if (adminPasswordInput) adminPasswordInput.value = '';
+    document.getElementById('pass-error').classList.add('hidden');
+
+    // Uncheck admin toggle and hide password box
+    const adminToggle = document.getElementById('admin-toggle');
+    if (adminToggle) adminToggle.checked = false;
+    const adminPasswordBox = document.getElementById('admin-password-box');
+    if (adminPasswordBox) adminPasswordBox.classList.add('hidden');
+
+    // Hide admin panel and show login area
+    const adminArea = document.getElementById('admin-login-area');
+    if (adminArea) adminArea.style.setProperty('display', 'block', 'important');
+
+    const mainLogo = document.getElementById('main-logo-area');
+    if (mainLogo) mainLogo.style.setProperty('display', 'block', 'important');
+
+    const lobbyStat = document.getElementById('lobby-status');
+    if (lobbyStat) lobbyStat.style.setProperty('display', 'block', 'important');
+
+    // Hide admin panel
+    const adminPanel = document.getElementById('admin-panel');
+    if (adminPanel) {
+        adminPanel.classList.add('hidden');
+        adminPanel.style.removeProperty('display');
+    }
+
+    // Show login screen
+    changeScreen('screen-login');
+}
+
 // ==========================================
 // MODAL GENÉRICO DE CONFIRMACIÓN (para admin)
 // ==========================================
@@ -795,9 +839,12 @@ function masterActionStartGame() {
             const pObj = s.val(); 
             if (!pObj) return alert("Sin jugadores en el callejón.");
             
-            const keys = Object.keys(pObj);
+            // Filter out admin players (isHost === true)
+            const playerEntries = Object.entries(pObj).filter(([_, p]) => !p.isHost);
+            if (playerEntries.length === 0) return alert("Solo hay administradores. Necesitas al menos un jugador.");
+
             const TOTAL_SINDICATOS = 4;
-            
+
             // Nombres base iniciales
             const nombresSindicatos = {
                 1: "Sindicato Alfa 🦆",
@@ -822,10 +869,10 @@ function masterActionStartGame() {
             }
 
             // 3. Distribuimos los jugadores de forma equitativa
-            keys.forEach((pId, i) => {
+            playerEntries.forEach(([pId, p], i) => {
                 const mId = `mafia_${(i % TOTAL_SINDICATOS) + 1}`;
                 upd[`players/${pId}/mafiaId`] = mId;
-                
+
                 // Si el sindicato no tiene líder asignado aún, este jugador se convierte en el Jefe
                 if (!config[mId].leaderId) {
                     config[mId].leaderId = pId;
@@ -883,7 +930,34 @@ function masterResetEverything() {
     if (globalLeaderListenerRef) globalLeaderListenerRef.off();
     if (adminSpyChatRef) adminSpyChatRef.off();
     if (adminSpyGlobalRef) adminSpyGlobalRef.off();
-    db.ref('game_room').set({ currentPhase:'LOGIN' }).then(() => window.location.reload());
+
+    // Preserve players while resetting game state
+    db.ref('game_room/players').once('value', playersSnapshot => {
+        const players = playersSnapshot.val() || {};
+        const updates = {
+            currentPhase: 'LOGIN',
+            round: 0,
+            mafias: null,
+            votes: null,
+            chats: null,
+            'global_leader_chat': null,
+            lastRoundLogs: [],
+            estadisticasHistoricas: { traiciones: {}, cooperaciones: {} },
+            currentEvent: null,
+            timerEndTime: null
+        };
+
+        // Preserve players but reset their mafiaId to "sin_asignar"
+        Object.keys(players).forEach(playerId => {
+            updates[`players/${playerId}/mafiaId`] = "sin_asignar";
+            // Preserve other player fields like name, isHost, online
+        });
+
+        db.ref('game_room').update(updates).then(() => {
+            // Instead of reloading, return to login screen to keep player connections intact
+            returnToLoginScreen();
+        });
+    });
 }
 
 function resolveRoundLogic(goToEnd=false) {
