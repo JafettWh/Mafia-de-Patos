@@ -412,15 +412,26 @@ function listenToGlobalState() {
         // Blindaje: si mi propio nodo de jugador ya no existe en la base de datos
         // (por ejemplo, el admin borró 'players' manualmente desde la consola de Firebase
         // en vez de usar el botón de reset), mi pantalla debe volver a LOGIN aunque
-        // 'currentPhase' no haya cambiado. Sin esto, el jugador queda "atrapado" viendo
-        // su última pantalla mientras el admin ya ve la base de datos vacía.
+        // 'currentPhase' no haya cambiado.
+        //
+        // IMPORTANTE: bajo varias escrituras simultáneas (varios jugadores haciendo push()
+        // casi al mismo tiempo, típico al llenarse el lobby con 5+ personas), un snapshot
+        // de 'on(value)' puede llegar momentáneamente sin reflejar aún la propia escritura
+        // de este cliente. Si actuáramos sobre ese snapshot directamente, expulsaríamos
+        // jugadores reales por error. Por eso, antes de expulsar, confirmamos con una
+        // lectura directa (once) de nuestro propio nodo.
         if (myPlayerId && !isHost && data.players && !data.players[myPlayerId]) {
-            myMafiaId = null; myMafiaName = ""; myPlayerId = null; myPlayerName = "";
-            lastProcessedPhaseKey = "";
-            if (timerInterval) clearInterval(timerInterval);
-            if (chatListenerRef) chatListenerRef.off();
-            if (globalLeaderListenerRef) globalLeaderListenerRef.off();
-            returnToLoginScreen();
+            const idToCheck = myPlayerId;
+            db.ref(`game_room/players/${idToCheck}`).once('value').then(soloSnap => {
+                if (soloSnap.exists()) return; // Falso positivo: mi nodo sí existe, fue un snapshot incompleto/desfasado
+                if (myPlayerId !== idToCheck) return; // Ya cambió el estado local (p.ej. reset legítimo en curso)
+                myMafiaId = null; myMafiaName = ""; myPlayerId = null; myPlayerName = "";
+                lastProcessedPhaseKey = "";
+                if (timerInterval) clearInterval(timerInterval);
+                if (chatListenerRef) chatListenerRef.off();
+                if (globalLeaderListenerRef) globalLeaderListenerRef.off();
+                returnToLoginScreen();
+            });
             return;
         }
 
