@@ -185,9 +185,22 @@ const io = new Server(httpServer, {
 const valueSubs = new Map();      // path -> Set<socket>
 const childAddedSubs = new Map(); // path -> Set<socket>
 
-function notifyChange(changedPath) {
+function notifyChange(changedPath, exactOnly = false) {
     for (const [subPath, sockets] of valueSubs.entries()) {
-        if (!pathsRelated(subPath, changedPath)) continue;
+        if (exactOnly) {
+            // Solo notifica si subPath ES changedPath o es descendiente de changedPath.
+            // No notifica a rutas ancestro (ej. game_room cuando cambió game_room/players/X).
+            const a = normalize(subPath).split("/").filter(Boolean);
+            const b = normalize(changedPath).split("/").filter(Boolean);
+            if (b.length > a.length) continue; // changedPath es más profundo que subPath → skip
+            let match = true;
+            for (let i = 0; i < b.length; i++) {
+                if (a[i] !== b[i]) { match = false; break; }
+            }
+            if (!match) continue;
+        } else {
+            if (!pathsRelated(subPath, changedPath)) continue;
+        }
         const val = getAtPath(state, subPath);
         const payload = { path: subPath, data: val === undefined ? null : val };
         sockets.forEach(sock => sock.emit("value", payload));
@@ -231,7 +244,11 @@ io.on("connection", (socket) => {
     socket.on("db:set", ({ path, value }, ack) => {
         try {
             fullSetAtPath(state, path, resolveServerValues(value));
-            notifyChange(normalize(path));
+            // exactOnly=true: no notifica a suscriptores ancestros (ej. game_room)
+            // cuando se escribe en una ruta hija (ej. game_room/players/kXYZ).
+            // Esto evita que el set() del jugador al entrar dispare el listener
+            // global en todos los clientes y los expulse al lobby.
+            notifyChange(normalize(path), true);
             schedulePersist();
             ack && ack({ ok: true });
         } catch (err) {
@@ -264,11 +281,16 @@ io.on("connection", (socket) => {
     socket.on("db:update", ({ path, updates }, ack) => {
         try {
             const base = normalize(path);
+            const changedPaths = [];
             Object.keys(updates).forEach(key => {
                 const full = base ? `${base}/${key}` : key;
                 fullSetAtPath(state, full, resolveServerValues(updates[key]));
-                notifyChange(full);
+                changedPaths.push(full);
             });
+            // Para updates de admin (ej. game_room con currentPhase, mafias, etc.)
+            // usamos notifyChange normal (pathsRelated) para que todos los clientes
+            // se enteren. Solo el set/push de jugadores individuales usa exactOnly.
+            changedPaths.forEach(p => notifyChange(p));
             schedulePersist();
             ack && ack({ ok: true });
         } catch (err) {
