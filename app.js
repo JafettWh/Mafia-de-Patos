@@ -710,6 +710,72 @@ function drawWarMap(data) {
 // ==========================================
 // SINCRONIZACIÓN DE FASES
 // ==========================================
+// ==========================================
+// RESOLVER mafiaId CON REINTENTOS (no dejar al jugador atascado)
+// ==========================================
+// Por qué existe: 'myMafiaId' se llena de forma asíncrona cuando llega el snapshot
+// de Firebase con la asignación de sindicato. Con muchos jugadores conectados a la
+// vez (cada escritura del admin compite por el mismo ancho de banda del socket de
+// cada cliente), el snapshot con NUESTRO propio mafiaId puede tardar más en llegar
+// que con pocos jugadores. El código anterior solo reintentaba UNA vez (800ms) y
+// si fallaba, no hacía nada — el jugador quedaba congelado sin avanzar ni saber
+// por qué. Esta función reintenta varias veces antes de rendirse, y si tras varios
+// segundos reales seguimos sin mafiaId, hace una lectura directa a la base de datos
+// como último recurso antes de mostrar cualquier mensaje de error.
+function ensureMafiaIdThenShowAssignment(onReady, attempt = 0) {
+    if (myMafiaId) {
+        changeScreen('screen-assignment');
+        if (!mafiaNameListenerActive) setupMafiaNameListener();
+        if (onReady) onReady();
+        return;
+    }
+
+    const sid = globalGameState.players?.[myPlayerId]?.mafiaId;
+    if (sid && sid !== "sin_asignar") {
+        myMafiaId = sid;
+        changeScreen('screen-assignment');
+        setupMafiaNameListener();
+        if (onReady) onReady();
+        return;
+    }
+
+    if (attempt < 8) {
+        // Hasta 8 intentos cada 500ms (~4 segundos), tiempo de sobra incluso con
+        // la red compartida por 30 conexiones a la vez.
+        setTimeout(() => ensureMafiaIdThenShowAssignment(onReady, attempt + 1), 500);
+        return;
+    }
+
+    // Último recurso: lectura directa (once) por si el listener general se perdió
+    // la actualización bajo carga.
+    db.ref(`game_room/players/${myPlayerId}`).once('value').then(snap => {
+        const directSid = snap.val()?.mafiaId;
+        if (directSid && directSid !== "sin_asignar") {
+            myMafiaId = directSid;
+            changeScreen('screen-assignment');
+            setupMafiaNameListener();
+            if (onReady) onReady();
+        } else {
+            // Esto ya sería un caso real: el jugador de verdad no tiene sindicato
+            // asignado (por ejemplo, se unió después de que el admin ya inició la
+            // partida). Mostramos la pantalla de espera con un mensaje claro en
+            // vez de dejarlo en blanco o expulsarlo silenciosamente.
+            changeScreen('screen-login');
+            const lobbyStat = document.getElementById('lobby-status');
+            if (lobbyStat) {
+                lobbyStat.innerText = "⚠️ No se pudo confirmar tu sindicato. Avisa al Don.";
+                lobbyStat.style.setProperty('display', 'block', 'important');
+            }
+        }
+    }).catch(() => {
+        const lobbyStat = document.getElementById('lobby-status');
+        if (lobbyStat) {
+            lobbyStat.innerText = "⚠️ Problema de conexión. Intenta recargar la página.";
+            lobbyStat.style.setProperty('display', 'block', 'important');
+        }
+    });
+}
+
 function syncGamePhase(phase) {
     if (phase === 'LOGIN') {
         if (!myPlayerId) return;
@@ -734,23 +800,22 @@ function syncGamePhase(phase) {
     }
 
     if (phase === 'ASSIGNMENT') {
-        if (!myMafiaId) {
-            setTimeout(() => {
-                const sid = globalGameState.players?.[myPlayerId]?.mafiaId;
-                if (sid && sid !== "sin_asignar") {
-                    myMafiaId = sid;
-                    changeScreen('screen-assignment');
-                    setupMafiaNameListener();
-                }
-            }, 800);
-        } else {
-            changeScreen('screen-assignment');
-            if (!mafiaNameListenerActive) setupMafiaNameListener();
-        }
+        ensureMafiaIdThenShowAssignment();
         return;
     }
 
-    if (phase === 'DASHBOARD') { renderDashboard(); return; }
+    if (phase === 'DASHBOARD') {
+        if (!myMafiaId) {
+            // No deberíamos llegar aquí sin mafiaId (ASSIGNMENT ya debió resolverlo),
+            // pero si pasa (ej. el admin avanzó muy rápido entre fases con mucha gente
+            // conectada), nos aseguramos primero en vez de renderizar un dashboard roto
+            // apuntando a 'game_room/mafias/null'.
+            ensureMafiaIdThenShowAssignment(() => renderDashboard());
+            return;
+        }
+        renderDashboard();
+        return;
+    }
 
     if (phase === 'TRANSITION') {
         changeScreen('screen-transition');
