@@ -290,6 +290,16 @@ function setupLogin() {
     const pRef = db.ref('game_room/players').push();
     myPlayerId = pRef.key;
     pRef.set({ name: myPlayerName, mafiaId: "sin_asignar", online: true, isHost });
+    // Marcamos que ya "procesamos" la fase actual para que el snapshot inicial
+    // (o cualquier snapshot disparado por OTRO jugador entrando justo después) no se
+    // interprete como un cambio de fase que deba resetear nuestra pantalla. Sin esto,
+    // 'lastProcessedPhaseKey' quedaba en "" durante todo el tutorial, y cualquier
+    // jugador nuevo entrando (push a 'players') disparaba el listener global en TODOS
+    // los clientes, haciendo que cualquiera que siguiera en el tutorial fuera
+    // expulsado de vuelta a la pantalla de login.
+    const curPhase = globalGameState.currentPhase || 'LOGIN';
+    const curRound = globalGameState.round || 0;
+    lastProcessedPhaseKey = `${curPhase}_${curRound}`;
     // IMPORTANTE: NO usamos .remove() aquí. Con 5+ dispositivos en la misma red WiFi
     // de salón, es normal que el router sature su tabla NAT y cierre/recicle sockets
     // brevemente (1-3 segundos) cuando entran conexiones nuevas. Firebase interpreta
