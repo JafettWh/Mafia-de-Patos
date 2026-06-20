@@ -511,15 +511,10 @@ function listenToGlobalState() {
         // lectura directa (once) de nuestro propio nodo.
         if (myPlayerId && !isHost && data.players && !data.players[myPlayerId]) {
             const idToCheck = myPlayerId;
-            // Esperamos 2 segundos antes de verificar: con el backend propio (Socket.IO),
-            // el snapshot de 'game_room' puede llegar antes de que el push() del jugador
-            // nuevo se propague completamente al estado en memoria del servidor. Sin este
-            // delay, un jugador recién conectado puede expulsar a los demás por un falso
-            // positivo (su nodo aún no aparece en data.players aunque sí existe).
             setTimeout(() => {
                 db.ref(`game_room/players/${idToCheck}`).once('value').then(soloSnap => {
-                    if (soloSnap.exists()) return; // Falso positivo: mi nodo sí existe, fue un snapshot incompleto/desfasado
-                    if (myPlayerId !== idToCheck) return; // Ya cambió el estado local (p.ej. reset legítimo en curso)
+                    if (soloSnap.exists()) return;
+                    if (myPlayerId !== idToCheck) return;
                     myMafiaId = null; myMafiaName = ""; myPlayerId = null; myPlayerName = "";
                     lastProcessedPhaseKey = "";
                     if (timerInterval) clearInterval(timerInterval);
@@ -1021,68 +1016,31 @@ function renderEndScreen() {
 // ==========================================
 function masterActionStartGame() {
     try { SoundEffects.play('click'); } catch(e){}
-    
-    // 1. Limpiamos primero el nodo de mafias viejo en Firebase para evitar conflictos de datos
-    db.ref('game_room/mafias').remove(() => {
-        
-        db.ref('game_room/players').once('value', s => {
-            const pObj = s.val(); 
-            if (!pObj) return alert("Sin jugadores en el callejón.");
-            
-            // Filter out admin players (isHost === true) y jugadores desconectados (online === false)
-            const playerEntries = Object.entries(pObj).filter(([_, p]) => !p.isHost && p.online !== false);
-            if (playerEntries.length === 0) return alert("Solo hay administradores o jugadores desconectados. Necesitas al menos un jugador conectado.");
-
-            const TOTAL_SINDICATOS = 4;
-
-            // Nombres base iniciales
-            const nombresSindicatos = {
-                1: "Sindicato Alfa 🦆",
-                2: "Sindicato Beta 🦆",
-                3: "Sindicato Gamma 🦆",
-                4: "Sindicato Delta 🦆"
-            };
-
-            const config = {};
-            const upd = {};
-
-            // 2. Creamos la estructura limpia para los 4 sindicatos
-            for (let m = 1; m <= TOTAL_SINDICATOS; m++) {
-                config[`mafia_${m}`] = { 
-                    id: `mafia_${m}`, 
-                    name: nombresSindicatos[m], 
-                    money: 1200, 
-                    reputation: 100, 
-                    influence: 50, 
-                    leaderId: "" 
-                };
-            }
-
-            // 3. Distribuimos los jugadores de forma equitativa
-            playerEntries.forEach(([pId, p], i) => {
-                const mId = `mafia_${(i % TOTAL_SINDICATOS) + 1}`;
-                upd[`players/${pId}/mafiaId`] = mId;
-
-                // Si el sindicato no tiene líder asignado aún, este jugador se convierte en el Jefe
-                if (!config[mId].leaderId) {
-                    config[mId].leaderId = pId;
-                }
-            });
-
-            // 4. Subimos la nueva configuración unificada a Firebase
-            upd['mafias'] = config; 
-            upd['currentPhase'] = 'ASSIGNMENT'; 
-            upd['round'] = 1;
-            
-            db.ref('game_room').update(upd, (error) => {
-                if (error) {
-                    console.error("Error al iniciar el juego:", error);
-                } else {
-                    console.log("¡Partida de 4 sindicatos iniciada con éxito!");
-                }
-            });
+    db.ref('game_room/mafias').remove().then(() => {
+        return db.ref('game_room/players').once('value');
+    }).then(s => {
+        const pObj = s.val();
+        if (!pObj) { alert("Sin jugadores en el callejón."); return; }
+        const playerEntries = Object.entries(pObj).filter(([_, p]) => !p.isHost && p.online !== false);
+        if (playerEntries.length === 0) { alert("Solo hay administradores o jugadores desconectados."); return; }
+        const TOTAL_SINDICATOS = 4;
+        const nombresSindicatos = { 1:"Sindicato Alfa 🦆", 2:"Sindicato Beta 🦆", 3:"Sindicato Gamma 🦆", 4:"Sindicato Delta 🦆" };
+        const config = {}, upd = {};
+        for (let m = 1; m <= TOTAL_SINDICATOS; m++) {
+            config[`mafia_${m}`] = { id:`mafia_${m}`, name:nombresSindicatos[m], money:1200, reputation:100, influence:50, leaderId:"" };
+        }
+        playerEntries.forEach(([pId], i) => {
+            const mId = `mafia_${(i % TOTAL_SINDICATOS) + 1}`;
+            upd[`players/${pId}/mafiaId`] = mId;
+            if (!config[mId].leaderId) config[mId].leaderId = pId;
         });
-    });
+        upd['mafias'] = config;
+        upd['currentPhase'] = 'ASSIGNMENT';
+        upd['round'] = 1;
+        return db.ref('game_room').update(upd);
+    }).then(() => {
+        console.log("¡Partida de 4 sindicatos iniciada con éxito!");
+    }).catch(err => console.error("Error al iniciar el juego:", err));
 }
 
 function masterLaunchRound() {
@@ -1122,7 +1080,7 @@ function masterResetEverything() {
     if (adminSpyGlobalRef) adminSpyGlobalRef.off();
 
     // Preserve players while resetting game state
-    db.ref('game_room/players').once('value', playersSnapshot => {
+    db.ref('game_room/players').once('value').then(playersSnapshot => {
         const players = playersSnapshot.val() || {};
         const updates = {
             currentPhase: 'LOGIN',
@@ -1144,7 +1102,6 @@ function masterResetEverything() {
         });
 
         db.ref('game_room').update(updates).then(() => {
-            // Instead of reloading, return to login screen to keep player connections intact
             returnToLoginScreen();
         });
     });
