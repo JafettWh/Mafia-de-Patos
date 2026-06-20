@@ -376,6 +376,8 @@ function initTutorialLogic() {
 // ==========================================
 // LISTENER GLOBAL FIREBASE
 // ==========================================
+let adminRenderDebounceTimer = null;
+
 function listenToGlobalState() {
     db.ref('game_room').on('value', snapshot => {
         const data = snapshot.val() || {};
@@ -390,11 +392,35 @@ function listenToGlobalState() {
         const phaseKey = `${phase}_${data.round || 0}`;
 
         if (isHost) {
-            renderMafiaTable('admin-mafia-tbody', data, true);
-            updateAdminPanel(data);
-            drawWarMap(data);
+            // Debounce: con muchos jugadores votando/chateando a la vez, este callback
+            // se dispara docenas de veces por segundo. Sin debounce, redibujar la tabla
+            // completa + el mapa SVG en cada disparo satura el hilo principal y la
+            // pantalla del admin parece "reiniciarse" o congelarse.
+            if (adminRenderDebounceTimer) clearTimeout(adminRenderDebounceTimer);
+            adminRenderDebounceTimer = setTimeout(() => {
+                renderMafiaTable('admin-mafia-tbody', data, true);
+                updateAdminPanel(data);
+                drawWarMap(data);
+            }, 200);
+
+            // Estos son ligeros (no recorren listas grandes), se actualizan sin debounce
             updateAdminButtonVisibility(phase);
             document.getElementById('btn-host-reset-final').classList.toggle('hidden', phase !== 'END');
+            return;
+        }
+
+        // Blindaje: si mi propio nodo de jugador ya no existe en la base de datos
+        // (por ejemplo, el admin borró 'players' manualmente desde la consola de Firebase
+        // en vez de usar el botón de reset), mi pantalla debe volver a LOGIN aunque
+        // 'currentPhase' no haya cambiado. Sin esto, el jugador queda "atrapado" viendo
+        // su última pantalla mientras el admin ya ve la base de datos vacía.
+        if (myPlayerId && !isHost && data.players && !data.players[myPlayerId]) {
+            myMafiaId = null; myMafiaName = ""; myPlayerId = null; myPlayerName = "";
+            lastProcessedPhaseKey = "";
+            if (timerInterval) clearInterval(timerInterval);
+            if (chatListenerRef) chatListenerRef.off();
+            if (globalLeaderListenerRef) globalLeaderListenerRef.off();
+            returnToLoginScreen();
             return;
         }
 
@@ -434,6 +460,7 @@ function renderMafiaTable(tableId, data, isAdmin) {
         let members = "";
         Object.keys(data.players || {}).forEach(pId => {
             const p = data.players[pId];
+            if (p.isHost) return; // El admin nunca debe aparecer como miembro de un sindicato
             if (p.mafiaId === m.id) {
                 members += `<li>👤 ${escapeHTML(p.name)}${m.leaderId===pId?' <span class="leader-tag">👑</span>':''}</li>`;
             }
@@ -455,7 +482,8 @@ function renderMafiaTable(tableId, data, isAdmin) {
 // ==========================================
 function updateAdminPanel(data) {
     document.getElementById('admin-round-label').innerText = `Fase: ${data.currentPhase||'LOGIN'} — Ronda ${data.round||0}/5`;
-    const tP = data.players ? Object.keys(data.players).length : 0;
+    // Solo contar jugadores reales (excluye al admin/host)
+    const tP = data.players ? Object.values(data.players).filter(p => !p.isHost).length : 0;
     const tV = (data.round && data.votes?.[`ronda_${data.round}`]) ? Object.keys(data.votes[`ronda_${data.round}`]).length : 0;
     document.getElementById('admin-vote-count').innerText = `Votos: ${tV} / ${tP}`;
 
@@ -829,9 +857,9 @@ function masterActionStartGame() {
             const pObj = s.val(); 
             if (!pObj) return alert("Sin jugadores en el callejón.");
             
-            // Filter out admin players (isHost === true)
-            const playerEntries = Object.entries(pObj).filter(([_, p]) => !p.isHost);
-            if (playerEntries.length === 0) return alert("Solo hay administradores. Necesitas al menos un jugador.");
+            // Filter out admin players (isHost === true) y jugadores desconectados (online === false)
+            const playerEntries = Object.entries(pObj).filter(([_, p]) => !p.isHost && p.online !== false);
+            if (playerEntries.length === 0) return alert("Solo hay administradores o jugadores desconectados. Necesitas al menos un jugador conectado.");
 
             const TOTAL_SINDICATOS = 4;
 
