@@ -158,7 +158,20 @@ app.get("/", (_req, res) => res.send("Mafia de Patos backend OK"));
 app.get("/healthz", (_req, res) => res.json({ ok: true, players: Object.keys(getAtPath(state, "game_room/players") || {}).length }));
 
 app.post("/reset", (_req, res) => {
-    state = {};
+    state = {
+        game_room: {
+            currentPhase: "LOGIN",
+            round: 0,
+            players: null,
+            mafias: null,
+            votes: null,
+            chats: null,
+            global_leader_chat: null,
+            lastRoundLogs: [],
+            currentEvent: null,
+            timerEndTime: null
+        }
+    };
     schedulePersist();
     notifyChange("game_room");
     res.json({ ok: true, message: "Estado del juego reseteado completamente." });

@@ -1079,9 +1079,17 @@ function masterResetDatabase() {
     fetch(window.MAFIA_BACKEND_URL + '/reset', { method: 'POST' })
         .then(r => r.json())
         .then(() => {
+            // El servidor ya notificó a todos los clientes con currentPhase:'LOGIN'.
+            // Solo reseteamos estado local del admin; el listener global se encarga
+            // de llevar a todos (incluido el admin) a la pantalla de login.
             myPlayerId = null; myPlayerName = ""; myMafiaId = null;
             myMafiaName = ""; isHost = false; lastProcessedPhaseKey = "";
             if (timerInterval) clearInterval(timerInterval);
+            if (chatListenerRef) chatListenerRef.off();
+            if (globalLeaderListenerRef) globalLeaderListenerRef.off();
+            if (adminSpyChatRef) adminSpyChatRef.off();
+            if (adminSpyGlobalRef) adminSpyGlobalRef.off();
+            globalGameState = {};
             returnToLoginScreen();
         })
         .catch(err => console.error("Error al limpiar BD:", err));
