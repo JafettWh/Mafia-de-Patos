@@ -157,6 +157,13 @@ app.use(cors({ origin: ALLOWED_ORIGINS.includes("*") ? true : ALLOWED_ORIGINS })
 app.get("/", (_req, res) => res.send("Mafia de Patos backend OK"));
 app.get("/healthz", (_req, res) => res.json({ ok: true, players: Object.keys(getAtPath(state, "game_room/players") || {}).length }));
 
+app.post("/reset", (_req, res) => {
+    state = {};
+    schedulePersist();
+    notifyChange("game_room");
+    res.json({ ok: true, message: "Estado del juego reseteado completamente." });
+});
+
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
     cors: { origin: ALLOWED_ORIGINS.includes("*") ? true : ALLOWED_ORIGINS, methods: ["GET", "POST"] }

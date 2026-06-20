@@ -158,12 +158,16 @@
                 return ref(childPath);
             },
 
-            once(eventType) {
-                return new Promise((resolve) => {
+            once(eventType, callback) {
+                const p = new Promise((resolve) => {
                     socket.emit("db:get", { path }, (res) => {
                         resolve(makeSnapshot(path, res ? res.data : undefined));
                     });
                 });
+                if (typeof callback === "function") {
+                    p.then(callback);
+                }
+                return p;
             },
 
             on(eventType, cb) {
