@@ -1,17 +1,12 @@
 // ==========================================
-// FIREBASE CONFIG
+// CONEXIÓN AL BACKEND PROPIO (Node.js + MySQL)
 // ==========================================
-const firebaseConfig = {
-    apiKey: "AIzaSyAG9BbgcQKuVAXPeXJgjz_7VA4FXnYST6Y",
-    authDomain: "mafia-de-patos-a9e22.firebaseapp.com",
-    projectId: "mafia-de-patos-a9e22",
-    storageBucket: "mafia-de-patos-a9e22.firebasestorage.app",
-    messagingSenderId: "32475436802",
-    appId: "1:32475436802:web:7c3d0011c40bdd11a9541b",
-    databaseURL: "https://mafia-de-patos-a9e22-default-rtdb.firebaseio.com"
-};
-
-firebase.initializeApp(firebaseConfig);
+// db-shim.js (cargado antes que este archivo en index.html) define un objeto
+// `firebase` compatible con la API que usa el resto de este archivo (ref/set/
+// update/push/once/on/onDisconnect), pero hablando con nuestro propio servidor
+// vía Socket.IO en vez de con Firebase. Así toda la lógica de juego de abajo
+// (ya corregida y probada) sigue funcionando sin cambios.
+firebase.initializeApp({});
 const db = firebase.database();
 const ADMIN_PASSWORD = "profe2025";
 

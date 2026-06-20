@@ -47,8 +47,15 @@
             word-break: break-word;
         }
     </style>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Conexión al backend propio (Node.js + MySQL) en vez de Firebase -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+        // ⚠️ IMPORTANTE: reemplaza esta URL por la de tu backend ya desplegado en Render
+        // (la obtienes al final de la guía de despliegue, en README.md). Ejemplo real:
+        // window.MAFIA_BACKEND_URL = "https://mafia-de-patos-backend.onrender.com";
+        window.MAFIA_BACKEND_URL = "https://TU-BACKEND-EN-RENDER.onrender.com";
+    </script>
+    <script src="db-shim.js"></script>
 </head>
 <body>
 <div id="game-container">
