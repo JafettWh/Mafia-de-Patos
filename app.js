@@ -511,16 +511,23 @@ function listenToGlobalState() {
         // lectura directa (once) de nuestro propio nodo.
         if (myPlayerId && !isHost && data.players && !data.players[myPlayerId]) {
             const idToCheck = myPlayerId;
-            db.ref(`game_room/players/${idToCheck}`).once('value').then(soloSnap => {
-                if (soloSnap.exists()) return; // Falso positivo: mi nodo sí existe, fue un snapshot incompleto/desfasado
-                if (myPlayerId !== idToCheck) return; // Ya cambió el estado local (p.ej. reset legítimo en curso)
-                myMafiaId = null; myMafiaName = ""; myPlayerId = null; myPlayerName = "";
-                lastProcessedPhaseKey = "";
-                if (timerInterval) clearInterval(timerInterval);
-                if (chatListenerRef) chatListenerRef.off();
-                if (globalLeaderListenerRef) globalLeaderListenerRef.off();
-                returnToLoginScreen();
-            });
+            // Esperamos 2 segundos antes de verificar: con el backend propio (Socket.IO),
+            // el snapshot de 'game_room' puede llegar antes de que el push() del jugador
+            // nuevo se propague completamente al estado en memoria del servidor. Sin este
+            // delay, un jugador recién conectado puede expulsar a los demás por un falso
+            // positivo (su nodo aún no aparece en data.players aunque sí existe).
+            setTimeout(() => {
+                db.ref(`game_room/players/${idToCheck}`).once('value').then(soloSnap => {
+                    if (soloSnap.exists()) return; // Falso positivo: mi nodo sí existe, fue un snapshot incompleto/desfasado
+                    if (myPlayerId !== idToCheck) return; // Ya cambió el estado local (p.ej. reset legítimo en curso)
+                    myMafiaId = null; myMafiaName = ""; myPlayerId = null; myPlayerName = "";
+                    lastProcessedPhaseKey = "";
+                    if (timerInterval) clearInterval(timerInterval);
+                    if (chatListenerRef) chatListenerRef.off();
+                    if (globalLeaderListenerRef) globalLeaderListenerRef.off();
+                    returnToLoginScreen();
+                });
+            }, 2000);
             return;
         }
 
