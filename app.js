@@ -362,25 +362,7 @@ function initTutorialLogic() {
         try { SoundEffects.play('click'); } catch(e){}
         if (step < total) { step++; updateUI(); }
         else {
-            const phase = globalGameState.currentPhase || 'LOGIN';
-            const phaseKey = `${phase}_${globalGameState.round || 0}`;
-            lastProcessedPhaseKey = ""; 
-            if (phase === 'ASSIGNMENT' && myMafiaId) {
-                lastProcessedPhaseKey = phaseKey;
-                syncGamePhase('ASSIGNMENT');
-            } else if (phase === 'DASHBOARD') {
-                lastProcessedPhaseKey = phaseKey;
-                syncGamePhase('DASHBOARD');
-            } else {
-                changeScreen('screen-login');
-                const mainLogo = document.getElementById('main-logo-area');
-                if (mainLogo) mainLogo.style.setProperty('display', 'block', 'important');
-                const lobbyStat = document.getElementById('lobby-status');
-                if (lobbyStat) {
-                    lobbyStat.innerText = "¡Listo! Esperando sindicato...";
-                    lobbyStat.style.setProperty('display', 'block', 'important');
-                }
-            }
+            finishTutorialAndSync();
         }
     };
     if (btnPrev) {
@@ -390,6 +372,81 @@ function initTutorialLogic() {
         };
     }
     updateUI();
+}
+
+// ==========================================
+// FIN DE TUTORIAL → SINCRONIZAR CON LA FASE REAL
+// ==========================================
+// Por qué existe esto: cuando el jugador termina el tutorial, antes se decidía la
+// siguiente pantalla en un solo intento usando 'globalGameState' y 'myMafiaId' tal
+// como estaban EN ESE INSTANTE. Pero ambos se actualizan de forma asíncrona por el
+// listener de Firebase. Si el admin asigna sindicatos justo cuando varios jugadores
+// hacen clic en "Entendido" al mismo tiempo (típico con muchas personas conectadas
+// a la vez, ya que todas compiten por el mismo socket/ancho de banda), el snapshot
+// con el 'mafiaId' de ESTE jugador puede no haber llegado todavía. Antes, eso caía
+// directo al 'else' y mandaba al jugador de vuelta a login, expulsándolo del juego
+// sin necesidad real.
+// Ahora, en vez de rendirse al primer chequeo, reintentamos por unos segundos antes
+// de asumir que de verdad seguimos en LOGIN.
+function finishTutorialAndSync(attempt = 0) {
+    const phase = globalGameState.currentPhase || 'LOGIN';
+    const phaseKey = `${phase}_${globalGameState.round || 0}`;
+
+    if (phase === 'ASSIGNMENT' && myMafiaId) {
+        lastProcessedPhaseKey = phaseKey;
+        syncGamePhase('ASSIGNMENT');
+        return;
+    }
+    if (phase === 'DASHBOARD') {
+        lastProcessedPhaseKey = phaseKey;
+        syncGamePhase('DASHBOARD');
+        return;
+    }
+    if (phase === 'ASSIGNMENT' && !myMafiaId) {
+        // La fase ya cambió pero mi propio mafiaId todavía no llegó del servidor.
+        // Reintentamos en vez de expulsar: hasta 10 intentos cada 400ms (~4 segundos),
+        // tiempo de sobra incluso con la red saturada por muchas conexiones a la vez.
+        if (attempt < 10) {
+            setTimeout(() => finishTutorialAndSync(attempt + 1), 400);
+        } else {
+            // Tras varios segundos reales sin recibir el mafiaId, intentamos una
+            // lectura directa (once) antes de rendirnos, por si el listener general
+            // se perdió la actualización bajo carga.
+            db.ref(`game_room/players/${myPlayerId}`).once('value').then(snap => {
+                const sid = snap.val()?.mafiaId;
+                if (sid && sid !== 'sin_asignar') {
+                    myMafiaId = sid;
+                    lastProcessedPhaseKey = phaseKey;
+                    syncGamePhase('ASSIGNMENT');
+                } else {
+                    // Esto ya sería un caso real de "no fui asignado a ningún sindicato"
+                    // (por ejemplo, el admin reseteó justo en este momento). Ahí sí
+                    // corresponde volver a login.
+                    lastProcessedPhaseKey = "";
+                    changeScreen('screen-login');
+                    const mainLogo = document.getElementById('main-logo-area');
+                    if (mainLogo) mainLogo.style.setProperty('display', 'block', 'important');
+                    const lobbyStat = document.getElementById('lobby-status');
+                    if (lobbyStat) {
+                        lobbyStat.innerText = "¡Listo! Esperando sindicato...";
+                        lobbyStat.style.setProperty('display', 'block', 'important');
+                    }
+                }
+            });
+        }
+        return;
+    }
+
+    // Fase realmente LOGIN: esto sí es el caso normal (admin aún no ha iniciado nada).
+    lastProcessedPhaseKey = "";
+    changeScreen('screen-login');
+    const mainLogo = document.getElementById('main-logo-area');
+    if (mainLogo) mainLogo.style.setProperty('display', 'block', 'important');
+    const lobbyStat = document.getElementById('lobby-status');
+    if (lobbyStat) {
+        lobbyStat.innerText = "¡Listo! Esperando sindicato...";
+        lobbyStat.style.setProperty('display', 'block', 'important');
+    }
 }
 
 // ==========================================
