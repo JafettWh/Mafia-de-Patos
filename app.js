@@ -290,7 +290,16 @@ function setupLogin() {
     const pRef = db.ref('game_room/players').push();
     myPlayerId = pRef.key;
     pRef.set({ name: myPlayerName, mafiaId: "sin_asignar", online: true, isHost });
-    pRef.onDisconnect().remove();
+    // IMPORTANTE: NO usamos .remove() aquí. Con 5+ dispositivos en la misma red WiFi
+    // de salón, es normal que el router sature su tabla NAT y cierre/recicle sockets
+    // brevemente (1-3 segundos) cuando entran conexiones nuevas. Firebase interpreta
+    // eso como una desconexión real y ejecuta este callback. Si borráramos el nodo,
+    // el jugador perdería su sesión por una simple fluctuación de red, aunque su
+    // navegador siga abierto y reconecte solo segundos después.
+    // En su lugar, solo lo marcamos 'online: false'; su nodo y su progreso permanecen
+    // intactos y se reactiva solo si vuelve a tener actividad.
+    pRef.onDisconnect().update({ online: false, disconnectedAt: firebase.database.ServerValue.TIMESTAMP });
+    if (!isHost) setupPresenceHandling();
 
     // Forzar ocultamiento absoluto de elementos de login para evitar solapamientos
     const adminArea = document.getElementById('admin-login-area');
@@ -371,6 +380,24 @@ function initTutorialLogic() {
         };
     }
     updateUI();
+}
+
+// ==========================================
+// PRESENCIA / RECONEXIÓN
+// ==========================================
+// Firebase dispara '.info/connected' cada vez que el socket se conecta o reconecta.
+// Tras una micro-caída de WiFi (común con 6+ dispositivos en la misma red de salón),
+// el SDK reconecta solo, pero el onDisconnect que registramos al hacer login ya se
+// "gastó" (Firebase lo ejecuta una sola vez por conexión). Por eso, en cada reconexión,
+// debemos volver a marcarnos online y volver a registrar el onDisconnect.
+function setupPresenceHandling() {
+    db.ref('.info/connected').on('value', snap => {
+        if (snap.val() === true && myPlayerId && !isHost) {
+            const pRef = db.ref(`game_room/players/${myPlayerId}`);
+            pRef.update({ online: true, disconnectedAt: null });
+            pRef.onDisconnect().update({ online: false, disconnectedAt: firebase.database.ServerValue.TIMESTAMP });
+        }
+    });
 }
 
 // ==========================================
