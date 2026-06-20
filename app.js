@@ -127,6 +127,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('btn-reset-game').addEventListener('click', () => {
         showConfirmModal("¿Reset completo? Borra toda la partida.", masterResetEverything);
     });
+    document.getElementById('btn-reset-db').addEventListener('click', () => {
+        showConfirmModal("¿Limpiar la base de datos? Borra TODO: jugadores, partida y estado. Los jugadores conectados verán la pantalla de login.", masterResetDatabase);
+    });
     document.getElementById('btn-host-reset-final').addEventListener('click', () => {
         showConfirmModal("¿Iniciar nueva partida? Borra todos los datos.", masterResetEverything);
     });
@@ -1069,6 +1072,19 @@ function masterEndGameNow() {
         if (s.val()?.currentPhase==='DASHBOARD') resolveRoundLogic(true);
         else db.ref('game_room').update({ currentPhase:'END' });
     });
+}
+
+function masterResetDatabase() {
+    try { SoundEffects.play('click'); } catch(e){}
+    fetch(window.MAFIA_BACKEND_URL + '/reset', { method: 'POST' })
+        .then(r => r.json())
+        .then(() => {
+            myPlayerId = null; myPlayerName = ""; myMafiaId = null;
+            myMafiaName = ""; isHost = false; lastProcessedPhaseKey = "";
+            if (timerInterval) clearInterval(timerInterval);
+            returnToLoginScreen();
+        })
+        .catch(err => console.error("Error al limpiar BD:", err));
 }
 
 function masterResetEverything() {
