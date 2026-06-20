@@ -514,18 +514,16 @@ function listenToGlobalState() {
         // lectura directa (once) de nuestro propio nodo.
         if (myPlayerId && !isHost && data.players && !data.players[myPlayerId]) {
             const idToCheck = myPlayerId;
-            setTimeout(() => {
-                db.ref(`game_room/players/${idToCheck}`).once('value').then(soloSnap => {
-                    if (soloSnap.exists()) return;
-                    if (myPlayerId !== idToCheck) return;
-                    myMafiaId = null; myMafiaName = ""; myPlayerId = null; myPlayerName = "";
-                    lastProcessedPhaseKey = "";
-                    if (timerInterval) clearInterval(timerInterval);
-                    if (chatListenerRef) chatListenerRef.off();
-                    if (globalLeaderListenerRef) globalLeaderListenerRef.off();
-                    returnToLoginScreen();
-                });
-            }, 2000);
+            db.ref(`game_room/players/${idToCheck}`).once('value').then(soloSnap => {
+                if (soloSnap.exists()) return;
+                if (myPlayerId !== idToCheck) return;
+                myMafiaId = null; myMafiaName = ""; myPlayerId = null; myPlayerName = "";
+                lastProcessedPhaseKey = "";
+                if (timerInterval) clearInterval(timerInterval);
+                if (chatListenerRef) chatListenerRef.off();
+                if (globalLeaderListenerRef) globalLeaderListenerRef.off();
+                returnToLoginScreen();
+            });
             return;
         }
 

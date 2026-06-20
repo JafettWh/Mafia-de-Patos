@@ -248,7 +248,16 @@ io.on("connection", (socket) => {
             const childVal = getAtPath(state, fullPath);
             subs.forEach(s => s.emit("child_added", { path: parent, key, data: childVal }));
         }
-        notifyChange(fullPath);
+        // Notificamos SOLO a suscriptores exactos del padre (ej. game_room/players),
+        // NO a suscriptores de rutas ancestro (ej. game_room). Esto evita que un push()
+        // de un jugador nuevo dispare el listener global en todos los clientes y cause
+        // que la verificación de presencia expulse a jugadores existentes.
+        const exactSubs = valueSubs.get(parent);
+        if (exactSubs) {
+            const parentVal = getAtPath(state, parent);
+            const payload = { path: parent, data: parentVal === undefined ? null : parentVal };
+            exactSubs.forEach(sock => sock.emit("value", payload));
+        }
         schedulePersist();
     });
 
