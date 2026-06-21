@@ -188,7 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
         pendingVoteAction = null; pendingVoteTarget = null;
     });
 
-    listenToGlobalState();
+    // listenToGlobalState() se llama después de joinRoom(), no aquí
 });
 
 // ==========================================
@@ -296,6 +296,8 @@ function setupLogin() {
     const doJoin = (code) => {
         const db2 = firebase.database();
         db2.joinRoom(code).then(() => {
+            // Ahora que estamos en la sala, activamos el listener global
+            listenToGlobalState();
             const pRef = db.ref('players').push();
             myPlayerId = pRef.key;
             pRef.set({ name: myPlayerName, mafiaId: "sin_asignar", online: true, isHost });
