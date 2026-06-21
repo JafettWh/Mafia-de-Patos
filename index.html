@@ -111,6 +111,44 @@
             <button id="btn-join" class="btn-primary mt-2">Entrar al Callejón 🦆</button>
         </div>
 
+        <!-- Reglas del juego, ahora DENTRO del lobby (ya no es una pantalla aparte).
+             Esto evita que un jugador nuevo entrando dispare un cambio de pantalla
+             para los jugadores que siguen leyendo las reglas: como nunca salimos de
+             'screen-login', no hay ninguna transición que pueda desincronizarse. -->
+        <div id="lobby-tutorial-block" class="card mt-2 hidden">
+            <h2 class="text-center">📖 Reglas del Bajo Mundo</h2>
+
+            <div class="tutorial-step" data-step="1">
+                <h3 class="mt-1">1. El Objetivo</h3>
+                <p class="mt-1">Serás asignado a un Sindicato. El objetivo es que tu Sindicato sea el más rico al final de 5 rondas.</p>
+            </div>
+
+            <div class="tutorial-step hidden" data-step="2">
+                <h3 class="mt-1">2. Las Acciones</h3>
+                <ul class="text-left mt-1 tutorial-action-list">
+                    <li class="mt-1">🤝 <strong>Cooperar:</strong> Dinero seguro según tu Reputación.</li>
+                    <li class="mt-1">🗡 <strong>Traicionar:</strong> Robas dinero al objetivo, pero pierdes Reputación.</li>
+                    <li class="mt-1">🥷 <strong>Robar:</strong> Robas Influencia al objetivo.</li>
+                    <li class="mt-1">📜 <strong>Pacto:</strong> Si ambos sindicatos lo eligen, ganan dinero e influencia extra.</li>
+                </ul>
+            </div>
+
+            <div class="tutorial-step hidden" data-step="3">
+                <h3 class="mt-1">3. Roles</h3>
+                <p class="mt-1">Uno será el <strong>Líder 👑</strong>. Solo él puede hablar con otros líderes en el Chat Global. El resto debate por el Chat Interno.</p>
+            </div>
+
+            <div class="tutorial-step hidden" data-step="4">
+                <h3 class="mt-1">4. Votación</h3>
+                <p class="mt-1">La acción de tu Sindicato se decide por <strong>mayoría de votos</strong>. ¡Pongan de acuerdo! El sistema te pedirá confirmación antes de enviar.</p>
+            </div>
+
+            <div class="grid-2 mt-2 gap-1">
+                <button id="btn-tut-prev" class="btn-secondary hidden">← Atrás</button>
+                <button id="btn-tut-next" class="btn-primary span-2">Siguiente →</button>
+            </div>
+        </div>
+
         <p id="lobby-status" class="text-center mt-2 text-muted"></p>
 
         <div id="admin-panel" class="hidden mt-2">
@@ -173,51 +211,6 @@
                 <h3 class="mt-2">📜 Último Reporte</h3>
                 <div id="admin-round-log" class="card bg-dark font-mono text-sm mt-1"></div>
             </div>
-        </div>
-    </div>
-
-    <div id="screen-tutorial" class="screen hidden">
-        <div class="card text-center">
-            <h2>📖 Reglas del Bajo Mundo</h2>
-
-            <div class="tutorial-step" data-step="1">
-                <h3 class="mt-1">1. El Objetivo</h3>
-                <p class="mt-1">Serás asignado a un Sindicato. El objetivo es que tu Sindicato sea el más rico al final de 5 rondas.</p>
-            </div>
-
-            <div class="tutorial-step hidden" data-step="2">
-                <h3 class="mt-1">2. Las Acciones</h3>
-                <ul class="text-left mt-1 tutorial-action-list">
-                    <li class="mt-1">🤝 <strong>Cooperar:</strong> Dinero seguro según tu Reputación.</li>
-                    <li class="mt-1">🗡 <strong>Traicionar:</strong> Robas dinero al objetivo, pero pierdes Reputación.</li>
-                    <li class="mt-1">🥷 <strong>Robar:</strong> Robas Influencia al objetivo.</li>
-                    <li class="mt-1">📜 <strong>Pacto:</strong> Si ambos sindicatos lo eligen, ganan dinero e influencia extra.</li>
-                </ul>
-            </div>
-
-            <div class="tutorial-step hidden" data-step="3">
-                <h3 class="mt-1">3. Roles</h3>
-                <p class="mt-1">Uno será el <strong>Líder 👑</strong>. Solo él puede hablar con otros líderes en el Chat Global. El resto debate por el Chat Interno.</p>
-            </div>
-
-            <div class="tutorial-step hidden" data-step="4">
-                <h3 class="mt-1">4. Votación</h3>
-                <p class="mt-1">La acción de tu Sindicato se decide por <strong>mayoría de votos</strong>. ¡Pongan de acuerdo! El sistema te pedirá confirmación antes de enviar.</p>
-            </div>
-
-            <div class="grid-2 mt-2 gap-1">
-                <button id="btn-tut-prev" class="btn-secondary hidden">← Atrás</button>
-                <button id="btn-tut-next" class="btn-primary span-2">Siguiente →</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- NUEVA PANTALLA DE ESPERA -->
-    <div id="screen-waiting" class="screen hidden text-center">
-        <div class="card border-neon">
-            <h2>🦆 ¡Listo!</h2>
-            <p class="mt-1 text-muted">Has aceptado las reglas del Bajo Mundo.</p>
-            <p class="mt-2 animate-pulse">⏳ Esperando que el Don asigne los sindicatos...</p>
         </div>
     </div>
 
