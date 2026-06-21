@@ -117,3 +117,4 @@ lo despierta, pero tarda 30-50 segundos. Para tu juego en clase:
 - **Capacidad:** con 30-40 jugadores el tráfico es mínimo (mensajes JSON
   pequeños); el cuello de botella real es el plan gratuito de Render/Aiven
   "durmiéndose" por inactividad, no la capacidad de procesar jugadores.
+xd

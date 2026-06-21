@@ -314,6 +314,41 @@ button:hover  { filter: brightness(1.1); }
 @keyframes fadeIn  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
 /* ==========================================
+   ACORDEÓN DE REGLAS (lobby)
+========================================== */
+#lobby-rules-accordion {
+    background-color: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 10px 12px;
+}
+#lobby-rules-accordion summary {
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: var(--neon-cyan);
+    list-style: none;
+    outline: none;
+}
+#lobby-rules-accordion summary::-webkit-details-marker { display: none; }
+#lobby-rules-accordion summary::before {
+    content: "▸ ";
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+#lobby-rules-accordion[open] summary::before {
+    transform: rotate(90deg);
+}
+#lobby-rules-accordion .rule-item {
+    border-left: 2px solid #334155;
+    padding-left: 10px;
+}
+#lobby-rules-accordion .rule-item h4 {
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+/* ==========================================
    RESPONSIVE MÓVIL
 ========================================== */
 @media (max-width: 400px) {

@@ -238,11 +238,6 @@ function returnToLoginScreen() {
     const lobbyStat = document.getElementById('lobby-status');
     if (lobbyStat) lobbyStat.style.setProperty('display', 'block', 'important');
 
-    // Si el bloque de tutorial seguía visible (ej. el admin reseteó mientras alguien
-    // leía las reglas), lo ocultamos para volver limpio al formulario de login.
-    const tutBlock = document.getElementById('lobby-tutorial-block');
-    if (tutBlock) tutBlock.classList.add('hidden');
-
     // Hide admin panel
     const adminPanel = document.getElementById('admin-panel');
     if (adminPanel) {
@@ -349,20 +344,15 @@ function setupLogin() {
                 updateAdminButtonVisibility('LOGIN');
                 setTimeout(() => initAdminSpyChatStreams('mafia_1'), 800);
             } else {
-                // El tutorial ahora vive DENTRO de screen-login (ya no es una pantalla
-                // aparte). Esto significa que mientras el jugador lee las reglas,
-                // 'changeScreen()' nunca se vuelve a invocar para él — por lo tanto,
-                // ningún snapshot disparado por otro jugador entrando puede "moverlo"
-                // de pantalla por error. Solo ocultamos el formulario y mostramos el
-                // bloque de reglas, ambos dentro de la misma screen-login activa.
-                const tutBlock = document.getElementById('lobby-tutorial-block');
-                if (tutBlock) tutBlock.classList.remove('hidden');
-                try {
-                    initTutorialLogic();
-                    const stepOne = document.querySelector('.tutorial-step[data-step="1"]');
-                    if (stepOne) stepOne.style.setProperty('display', 'block', 'important');
-                } catch(e) {
-                    console.error("Error en tutorial:", e);
+                // Las reglas ahora viven en un acordeón visible ANTES de registrarse
+                // (el jugador puede leerlas o no, sin que bloquee su entrada). Por eso
+                // aquí ya no hay ningún tutorial intermedio: el jugador pasa directo
+                // al estado de espera dentro del mismo lobby. Como nunca cambiamos de
+                // pantalla en este punto, no hay ninguna transición que un jugador
+                // nuevo entrando pueda desincronizar.
+                if (lobbyStat) {
+                    lobbyStat.innerText = "¡Listo! Esperando que el Don asigne sindicatos...";
+                    lobbyStat.style.setProperty('display', 'block', 'important');
                 }
             }
         }).catch(err => {
@@ -383,75 +373,6 @@ function setupLogin() {
             .catch(() => alert("Error de conexión al crear la sala."));
     } else {
         doJoin(enteredCode);
-    }
-}
-
-// ==========================================
-// TUTORIAL
-// ==========================================
-function initTutorialLogic() {
-    let step = 1;
-    const total = 4;
-    const btnPrev = document.getElementById('btn-tut-prev');
-    const btnNext = document.getElementById('btn-tut-next');
-
-    function updateUI() {
-        document.querySelectorAll('.tutorial-step').forEach(s => {
-            s.style.setProperty('display', parseInt(s.dataset.step) === step ? 'block' : 'none', 'important');
-        });
-        if (btnPrev) btnPrev.style.display = step === 1 ? 'none' : '';
-        if (btnNext) btnNext.innerText = step === total ? "¡Entendido! 🦆" : "Siguiente →";
-    }
-
-    btnNext.onclick = () => {
-        try { SoundEffects.play('click'); } catch(e){}
-        if (step < total) { step++; updateUI(); }
-        else {
-            finishTutorialAndSync();
-        }
-    };
-    if (btnPrev) {
-        btnPrev.onclick = () => { 
-            try { SoundEffects.play('click'); } catch(e){}
-            if (step > 1) { step--; updateUI(); } 
-        };
-    }
-    updateUI();
-}
-
-// ==========================================
-// FIN DE TUTORIAL → VOLVER AL ESTADO DE ESPERA DEL LOBBY
-// ==========================================
-// Por qué se simplificó esto: antes, terminar el tutorial implicaba decidir en el
-// momento "¿a qué pantalla voy?" comparando 'globalGameState' y 'myMafiaId' en ese
-// instante exacto. Como ambos se actualizan de forma asíncrona, esa decisión podía
-// tomarse con datos desfasados (más probable cuantos más jugadores hay conectados
-// a la vez), lo que en versiones anteriores llegó a expulsar jugadores por error.
-//
-// Ahora el tutorial vive DENTRO de 'screen-login' (nunca cambiamos de pantalla para
-// mostrarlo), así que terminar el tutorial no necesita decidir nada: solo ocultamos
-// el bloque de reglas y mostramos el mensaje de espera, ambos dentro del lobby. El
-// listener global (listenToGlobalState → syncGamePhase → ensureMafiaIdThenShowAssignment)
-// ya se encarga, con sus propios reintentos robustos, de avanzar a la pantalla de
-// asignación en cuanto la fase real cambie y nuestro mafiaId esté listo.
-function finishTutorialAndSync() {
-    const tutBlock = document.getElementById('lobby-tutorial-block');
-    if (tutBlock) tutBlock.classList.add('hidden');
-
-    const lobbyStat = document.getElementById('lobby-status');
-    if (lobbyStat) {
-        lobbyStat.innerText = "¡Listo! Esperando que el Don asigne sindicatos...";
-        lobbyStat.style.setProperty('display', 'block', 'important');
-    }
-
-    // Por si la fase ya cambió mientras leíamos las reglas (el admin asignó sindicatos
-    // durante esos segundos), forzamos una comprobación inmediata en vez de esperar
-    // pasivamente al próximo snapshot del listener global.
-    const phase = globalGameState.currentPhase || 'LOGIN';
-    if (phase !== 'LOGIN') {
-        const phaseKey = `${phase}_${globalGameState.round || 0}`;
-        lastProcessedPhaseKey = phaseKey;
-        syncGamePhase(phase);
     }
 }
 
@@ -536,15 +457,6 @@ function listenToGlobalState() {
         }
 
         if (lastProcessedPhaseKey !== phaseKey) {
-            // Si el jugador sigue leyendo las reglas dentro del lobby, no lo interrumpimos
-            // con una transición automática de pantalla aunque la fase ya haya cambiado.
-            // 'finishTutorialAndSync()' se encarga de revisar la fase real apenas cierre
-            // el bloque de reglas (botón "¡Entendido!").
-            const tutBlock = document.getElementById('lobby-tutorial-block');
-            const inTutorial = tutBlock && !tutBlock.classList.contains('hidden');
-            if (inTutorial && phase !== 'LOGIN') {
-                return;
-            }
             lastProcessedPhaseKey = phaseKey;
             syncGamePhase(phase);
         }
@@ -802,8 +714,6 @@ function syncGamePhase(phase) {
         if (adminArea) adminArea.style.setProperty('display', 'block', 'important');
         const mainLogo = document.getElementById('main-logo-area');
         if (mainLogo) mainLogo.style.setProperty('display', 'block', 'important');
-        const tutBlock = document.getElementById('lobby-tutorial-block');
-        if (tutBlock) tutBlock.classList.add('hidden');
         
         document.getElementById('lobby-status').innerText = "";
         document.getElementById('btn-join').disabled = false;
