@@ -509,18 +509,25 @@ function listenToGlobalState() {
         }
 
         // Si acabamos de entrar (login en curso), el PRIMER snapshot real que
-        // llegue aquí decide la fase sin importar lo que diga
-        // 'lastProcessedPhaseKey' de antes. Esto reemplaza la lectura síncrona
-        // que había justo después de login(): esa lectura ocurría antes de que
-        // este snapshot llegara por la red, así que siempre asumía 'LOGIN'
-        // sin importar la fase real (un jugador entrando tarde, con el juego
-        // ya en ASSIGNMENT o más adelante, podía quedar con la pantalla
-        // equivocada). Al decidir aquí, con el snapshot real en mano, el
-        // jugador siempre ve la fase correcta exista o no una sesión previa.
+        // llegue aquí decide si hace falta sincronizar la pantalla con una
+        // fase ya avanzada. Solo forzamos syncGamePhase() cuando la fase real
+        // NO es 'LOGIN' (caso: jugador que entra tarde, con el juego ya en
+        // ASSIGNMENT/DASHBOARD/etc. — antes se quedaba con la pantalla
+        // equivocada porque 'lastProcessedPhaseKey' se fijaba leyendo
+        // 'globalGameState' de forma síncrona, ANTES de que este snapshot
+        // real llegara por la red, así que siempre asumía 'LOGIN').
+        //
+        // Cuando la fase real SÍ es 'LOGIN' (el caso normal: el jugador entra
+        // a un lobby que aún no inició), NO llamamos a syncGamePhase('LOGIN')
+        // aquí: esa función está pensada para el caso de "el admin reinició
+        // la partida mientras yo seguía adentro" y resetea myPlayerId/vuelve a
+        // screen-login sin condición adicional. Llamarla justo después de
+        // registrarnos nos auto-expulsaría de inmediato a screen-login en
+        // cada login normal.
         if (joiningNow) {
             joiningNow = false;
             lastProcessedPhaseKey = phaseKey;
-            syncGamePhase(phase);
+            if (phase !== 'LOGIN') syncGamePhase(phase);
             return;
         }
 
