@@ -16,6 +16,7 @@ const ADMIN_PASSWORD = "profe2025";
 let myPlayerId         = null;
 let myPlayerName       = "";
 let currentRoomCode    = null;
+let playerRegistered   = false; // true solo después de que pRef.set() confirmó al servidor
 let myMafiaId          = null;
 let myMafiaName        = "";
 let isHost             = false;
@@ -300,7 +301,9 @@ function setupLogin() {
             listenToGlobalState();
             const pRef = db.ref('players').push();
             myPlayerId = pRef.key;
-            pRef.set({ name: myPlayerName, mafiaId: "sin_asignar", online: true, isHost });
+            pRef.set({ name: myPlayerName, mafiaId: "sin_asignar", online: true, isHost }).then(() => {
+                playerRegistered = true;
+            });
     // Marcamos que ya "procesamos" la fase actual para que el snapshot inicial
     // (o cualquier snapshot disparado por OTRO jugador entrando justo después) no se
     // interprete como un cambio de fase que deba resetear nuestra pantalla. Sin esto,
@@ -544,13 +547,13 @@ function listenToGlobalState() {
         // de este cliente. Si actuáramos sobre ese snapshot directamente, expulsaríamos
         // jugadores reales por error. Por eso, antes de expulsar, confirmamos con una
         // lectura directa (once) de nuestro propio nodo.
-        if (myPlayerId && !isHost && data.players && !data.players[myPlayerId]) {
+        if (myPlayerId && !isHost && playerRegistered && data.players && !data.players[myPlayerId]) {
             const idToCheck = myPlayerId;
             db.ref(`players/${idToCheck}`).once('value').then(soloSnap => {
                 if (soloSnap.exists()) return; // Falso positivo: mi nodo sí existe, fue un snapshot incompleto/desfasado
                 if (myPlayerId !== idToCheck) return; // Ya cambió el estado local (p.ej. reset legítimo en curso)
                 myMafiaId = null; myMafiaName = ""; myPlayerId = null; myPlayerName = "";
-                lastProcessedPhaseKey = "";
+                lastProcessedPhaseKey = ""; playerRegistered = false;
                 if (timerInterval) clearInterval(timerInterval);
                 if (chatListenerRef) chatListenerRef.off();
                 if (globalLeaderListenerRef) globalLeaderListenerRef.off();
@@ -810,7 +813,7 @@ function syncGamePhase(phase) {
     if (phase === 'LOGIN') {
         if (!myPlayerId) return;
         myMafiaId = null; myMafiaName = ""; myPlayerId = null; myPlayerName = "";
-        lastProcessedPhaseKey = "";
+        lastProcessedPhaseKey = ""; playerRegistered = false;
         mafiaNameListenerActive = false;
         internalVotesListenerActive = false;
         if (timerInterval) clearInterval(timerInterval);
