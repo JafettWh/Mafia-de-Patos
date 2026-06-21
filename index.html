@@ -94,6 +94,11 @@
 
         <div id="admin-login-area" class="card mt-2">
             <input type="text" id="player-name" placeholder="Tu Alias / Nombre" autocomplete="off">
+            <div id="room-code-box" class="mt-1">
+                <input type="text" id="room-code-input" placeholder="Código de Sala (ej: AB3X7K)" maxlength="6"
+                    autocomplete="off" style="text-transform:uppercase;letter-spacing:3px;font-weight:bold;font-size:1.1rem;">
+                <p class="text-muted text-sm mt-1">Pídele el código al Don antes de entrar.</p>
+            </div>
             <div class="mt-1">
                 <label class="admin-toggle-label">
                     <input type="checkbox" id="admin-toggle" class="admin-toggle-checkbox"> Soy el Don (Profesor)
@@ -111,6 +116,10 @@
         <div id="admin-panel" class="hidden mt-2">
             <div class="card border-admin">
                 <h2 class="text-center text-neon-pink">👑 Consola del Don</h2>
+                <div class="text-center mt-1" style="background:#0f172a;border:2px solid #00ffcc;border-radius:8px;padding:10px;">
+                    <p class="text-muted text-sm" style="margin:0">Código de Sala — comparte con los jugadores:</p>
+                    <p id="room-code-display" class="font-mono font-bold text-neon-cyan" style="font-size:2rem;letter-spacing:6px;margin:4px 0">------</p>
+                </div>
                 <p id="admin-round-label" class="text-center font-bold mt-1">Fase: LOGIN</p>
                 <p id="admin-vote-count" class="text-center text-muted text-sm">Votos: 0/0</p>
 
@@ -120,8 +129,8 @@
                     <button id="btn-force-resolve" class="btn-warning hidden">⚡ Forzar Resolución</button>
                     <button id="btn-admin-next" class="btn-primary hidden">⏭ Siguiente Ronda</button>
                     <button id="btn-end-game-now" class="btn-end hidden span-2">🏁 Terminar Partida Ya</button>
-                    <button id="btn-reset-game" class="btn-danger span-2" type="button">🔄 Reset → Lobby</button>
-                    <button id="btn-reset-db" class="btn-danger span-2 btn-reset-db" type="button">🗑 Limpiar Base de Datos</button>
+                    <button id="btn-reset-game" class="btn-danger span-2">🔄 Reset → Lobby</button>
+                    <button id="btn-reset-db" class="btn-danger span-2" style="background:#7c1d1d;">🗑 Limpiar Sala</button>
                 </div>
 
                 <h3 class="mt-2 text-neon-yellow">📊 Estado de Sindicatos</h3>

@@ -15,6 +15,7 @@ const ADMIN_PASSWORD = "profe2025";
 // ==========================================
 let myPlayerId         = null;
 let myPlayerName       = "";
+let currentRoomCode    = null;
 let myMafiaId          = null;
 let myMafiaName        = "";
 let isHost             = false;
@@ -127,8 +128,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('btn-reset-game').addEventListener('click', () => {
         showConfirmModal("¿Reset completo? Borra toda la partida.", masterResetEverything);
     });
-    document.getElementById('btn-reset-db').addEventListener('click', () => {
-        showConfirmModal("¿Limpiar la base de datos? Borra TODO: jugadores, partida y estado. Los jugadores conectados verán la pantalla de login.", masterResetDatabase);
+    document.getElementById('btn-reset-db')?.addEventListener('click', () => {
+        showConfirmModal("¿Limpiar sala? Borra todos los jugadores y el estado. Todos verán la pantalla de login.", masterResetDatabase);
     });
     document.getElementById('btn-host-reset-final').addEventListener('click', () => {
         showConfirmModal("¿Iniciar nueva partida? Borra todos los datos.", masterResetEverything);
@@ -164,7 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Botones del modal de confirmación de voto
     document.getElementById('btn-confirm-vote').addEventListener('click', () => {
         if (!pendingVoteAction || !pendingVoteTarget) return;
-        db.ref(`game_room/votes/ronda_${globalGameState.round}/${myPlayerId}`).set({
+        db.ref(`votes/ronda_${globalGameState.round}/${myPlayerId}`).set({
             player: myPlayerName, mafiaSource: myMafiaId,
             action: pendingVoteAction, target: pendingVoteTarget
         });
@@ -272,6 +273,9 @@ function setupLogin() {
     const nameIn = document.getElementById('player-name').value.trim();
     if (nameIn.length < 2) return alert("Alias inválido. Mínimo 2 caracteres.");
 
+    const roomCodeInput = document.getElementById('room-code-input');
+    const enteredCode = roomCodeInput ? roomCodeInput.value.trim().toUpperCase() : "";
+
     if (document.getElementById('admin-toggle').checked) {
         if (document.getElementById('admin-password').value !== ADMIN_PASSWORD) {
             document.getElementById('pass-error').classList.remove('hidden');
@@ -281,13 +285,20 @@ function setupLogin() {
         isHost = true;
     }
 
+    if (!isHost && enteredCode.length !== 6) {
+        return alert("Ingresa el código de sala de 6 caracteres que te dio el Don.");
+    }
+
     document.getElementById('pass-error').classList.add('hidden');
     myPlayerName = escapeHTML(nameIn);
     try { SoundEffects.play('click'); } catch(e){}
 
-    const pRef = db.ref('game_room/players').push();
-    myPlayerId = pRef.key;
-    pRef.set({ name: myPlayerName, mafiaId: "sin_asignar", online: true, isHost });
+    const doJoin = (code) => {
+        const db2 = firebase.database();
+        db2.joinRoom(code).then(() => {
+            const pRef = db.ref('players').push();
+            myPlayerId = pRef.key;
+            pRef.set({ name: myPlayerName, mafiaId: "sin_asignar", online: true, isHost });
     // Marcamos que ya "procesamos" la fase actual para que el snapshot inicial
     // (o cualquier snapshot disparado por OTRO jugador entrando justo después) no se
     // interprete como un cambio de fase que deba resetear nuestra pantalla. Sin esto,
@@ -295,9 +306,9 @@ function setupLogin() {
     // jugador nuevo entrando (push a 'players') disparaba el listener global en TODOS
     // los clientes, haciendo que cualquiera que siguiera en el tutorial fuera
     // expulsado de vuelta a la pantalla de login.
-    const curPhase = globalGameState.currentPhase || 'LOGIN';
-    const curRound = globalGameState.round || 0;
-    lastProcessedPhaseKey = `${curPhase}_${curRound}`;
+            const curPhase = globalGameState.currentPhase || 'LOGIN';
+            const curRound = globalGameState.round || 0;
+            lastProcessedPhaseKey = `${curPhase}_${curRound}`;
     // IMPORTANTE: NO usamos .remove() aquí. Con 5+ dispositivos en la misma red WiFi
     // de salón, es normal que el router sature su tabla NAT y cierre/recicle sockets
     // brevemente (1-3 segundos) cuando entran conexiones nuevas. Firebase interpreta
@@ -306,36 +317,55 @@ function setupLogin() {
     // navegador siga abierto y reconecte solo segundos después.
     // En su lugar, solo lo marcamos 'online: false'; su nodo y su progreso permanecen
     // intactos y se reactiva solo si vuelve a tener actividad.
-    pRef.onDisconnect().update({ online: false, disconnectedAt: firebase.database.ServerValue.TIMESTAMP });
-    if (!isHost) setupPresenceHandling();
+            pRef.onDisconnect().update({ online: false, disconnectedAt: firebase.database.ServerValue.TIMESTAMP });
+            if (!isHost) setupPresenceHandling();
 
-    // Forzar ocultamiento absoluto de elementos de login para evitar solapamientos
-    const adminArea = document.getElementById('admin-login-area');
-    if (adminArea) adminArea.style.setProperty('display', 'none', 'important');
-    
-    const mainLogo = document.getElementById('main-logo-area');
-    if (mainLogo) mainLogo.style.setProperty('display', 'none', 'important');
-    
-    const lobbyStat = document.getElementById('lobby-status');
-    if (lobbyStat) lobbyStat.style.setProperty('display', 'none', 'important');
+            const adminArea = document.getElementById('admin-login-area');
+            if (adminArea) adminArea.style.setProperty('display', 'none', 'important');
+            const mainLogo = document.getElementById('main-logo-area');
+            if (mainLogo) mainLogo.style.setProperty('display', 'none', 'important');
+            const lobbyStat = document.getElementById('lobby-status');
+            if (lobbyStat) lobbyStat.style.setProperty('display', 'none', 'important');
+
+            if (isHost) {
+                // Mostrar código de sala en el panel admin
+                const codeDisplay = document.getElementById('room-code-display');
+                if (codeDisplay) codeDisplay.innerText = code;
+                const adminPanel = document.getElementById('admin-panel');
+                if (adminPanel) {
+                    adminPanel.classList.remove('hidden');
+                    adminPanel.style.setProperty('display', 'block', 'important');
+                }
+                updateAdminButtonVisibility('LOGIN');
+                setTimeout(() => initAdminSpyChatStreams('mafia_1'), 800);
+            } else {
+                changeScreen('screen-tutorial');
+                try {
+                    initTutorialLogic();
+                    const stepOne = document.querySelector('.tutorial-step[data-step="1"]');
+                    if (stepOne) stepOne.style.setProperty('display', 'block', 'important');
+                } catch(e) {
+                    console.error("Error en tutorial:", e);
+                }
+            }
+        }).catch(err => {
+            alert("No se pudo unir a la sala. Verifica el código e intenta de nuevo.");
+            console.error(err);
+        });
+    };
 
     if (isHost) {
-        const adminPanel = document.getElementById('admin-panel');
-        if (adminPanel) {
-            adminPanel.classList.remove('hidden');
-            adminPanel.style.setProperty('display', 'block', 'important');
-        }
-        updateAdminButtonVisibility('LOGIN');
-        setTimeout(() => initAdminSpyChatStreams('mafia_1'), 800);
+        // El admin crea una sala nueva
+        fetch(window.MAFIA_BACKEND_URL + '/create-room', { method: 'POST' })
+            .then(r => r.json())
+            .then(res => {
+                if (!res.ok) return alert("Error al crear sala.");
+                currentRoomCode = res.code;
+                doJoin(res.code);
+            })
+            .catch(() => alert("Error de conexión al crear la sala."));
     } else {
-        changeScreen('screen-tutorial');
-        try {
-            initTutorialLogic();
-            const stepOne = document.querySelector('.tutorial-step[data-step="1"]');
-            if (stepOne) stepOne.style.setProperty('display', 'block', 'important');
-        } catch(e) {
-            console.error("Error en tutorial:", e);
-        }
+        doJoin(enteredCode);
     }
 }
 
@@ -410,7 +440,7 @@ function finishTutorialAndSync(attempt = 0) {
             // Tras varios segundos reales sin recibir el mafiaId, intentamos una
             // lectura directa (once) antes de rendirnos, por si el listener general
             // se perdió la actualización bajo carga.
-            db.ref(`game_room/players/${myPlayerId}`).once('value').then(snap => {
+            db.ref(`players/${myPlayerId}`).once('value').then(snap => {
                 const sid = snap.val()?.mafiaId;
                 if (sid && sid !== 'sin_asignar') {
                     myMafiaId = sid;
@@ -458,7 +488,7 @@ function finishTutorialAndSync(attempt = 0) {
 function setupPresenceHandling() {
     db.ref('.info/connected').on('value', snap => {
         if (snap.val() === true && myPlayerId && !isHost) {
-            const pRef = db.ref(`game_room/players/${myPlayerId}`);
+            const pRef = db.ref(`players/${myPlayerId}`);
             pRef.update({ online: true, disconnectedAt: null });
             pRef.onDisconnect().update({ online: false, disconnectedAt: firebase.database.ServerValue.TIMESTAMP });
         }
@@ -471,7 +501,7 @@ function setupPresenceHandling() {
 let adminRenderDebounceTimer = null;
 
 function listenToGlobalState() {
-    db.ref('game_room').on('value', snapshot => {
+    db.ref('').on('value', snapshot => {
         const data = snapshot.val() || {};
         globalGameState = data;
 
@@ -514,9 +544,9 @@ function listenToGlobalState() {
         // lectura directa (once) de nuestro propio nodo.
         if (myPlayerId && !isHost && data.players && !data.players[myPlayerId]) {
             const idToCheck = myPlayerId;
-            db.ref(`game_room/players/${idToCheck}`).once('value').then(soloSnap => {
-                if (soloSnap.exists()) return;
-                if (myPlayerId !== idToCheck) return;
+            db.ref(`players/${idToCheck}`).once('value').then(soloSnap => {
+                if (soloSnap.exists()) return; // Falso positivo: mi nodo sí existe, fue un snapshot incompleto/desfasado
+                if (myPlayerId !== idToCheck) return; // Ya cambió el estado local (p.ej. reset legítimo en curso)
                 myMafiaId = null; myMafiaName = ""; myPlayerId = null; myPlayerName = "";
                 lastProcessedPhaseKey = "";
                 if (timerInterval) clearInterval(timerInterval);
@@ -618,14 +648,14 @@ function initAdminSpyChatStreams(mafiaId) {
     bInt.innerHTML = ""; bGlob.innerHTML = "";
     const r = globalGameState.round || 1;
 
-    adminSpyChatRef = db.ref(`game_room/chats/${mafiaId}/ronda_${r}`);
+    adminSpyChatRef = db.ref(`chats/${mafiaId}/ronda_${r}`);
     adminSpyChatRef.on('child_added', s => {
         const m = s.val(); if(!m) return;
         bInt.innerHTML += `<div><strong>[${escapeHTML(m.sender)}]:</strong> ${escapeHTML(m.text)}</div>`;
         bInt.scrollTop = bInt.scrollHeight;
     });
 
-    adminSpyGlobalRef = db.ref(`game_room/global_leader_chat/ronda_${r}`);
+    adminSpyGlobalRef = db.ref(`global_leader_chat/ronda_${r}`);
     adminSpyGlobalRef.on('child_added', s => {
         const m = s.val(); if(!m) return;
         bGlob.innerHTML += `<div><strong>[${escapeHTML(m.mafiaName)} - ${escapeHTML(m.sender)}]:</strong> ${escapeHTML(m.text)}</div>`;
@@ -746,7 +776,7 @@ function ensureMafiaIdThenShowAssignment(onReady, attempt = 0) {
 
     // Último recurso: lectura directa (once) por si el listener general se perdió
     // la actualización bajo carga.
-    db.ref(`game_room/players/${myPlayerId}`).once('value').then(snap => {
+    db.ref(`players/${myPlayerId}`).once('value').then(snap => {
         const directSid = snap.val()?.mafiaId;
         if (directSid && directSid !== "sin_asignar") {
             myMafiaId = directSid;
@@ -832,7 +862,7 @@ function syncGamePhase(phase) {
 // ==========================================
 function setupMafiaNameListener() {
     mafiaNameListenerActive = true;
-    db.ref(`game_room/mafias/${myMafiaId}`).on('value', snap => {
+    db.ref(`mafias/${myMafiaId}`).on('value', snap => {
         const m = snap.val(); if (!m) return;
         myMafiaName = m.name;
         const el = document.getElementById('assigned-mafia-name');
@@ -850,7 +880,7 @@ function setupMafiaNameListener() {
         const v = document.getElementById('custom-mafia-name').value.trim();
         if (v.length < 3) return alert("Mínimo 3 caracteres.");
         try { SoundEffects.play('click'); } catch(e){}
-        db.ref(`game_room/mafias/${myMafiaId}`).update({ name: escapeHTML(v) });
+        db.ref(`mafias/${myMafiaId}`).update({ name: escapeHTML(v) });
         document.getElementById('naming-box').innerHTML = "<p class='text-success'>✅ ¡Nombre guardado!</p>";
     });
 }
@@ -868,7 +898,7 @@ function renderDashboard() {
     document.getElementById('dash-leader-badge').classList.toggle('hidden', !isLeader);
     document.getElementById('global-leader-chat-box').classList.toggle('hidden', !isLeader);
 
-    db.ref(`game_room/mafias/${myMafiaId}`).on('value', s => {
+    db.ref(`mafias/${myMafiaId}`).on('value', s => {
         const m = s.val(); if (!m) return;
         document.getElementById('stat-money').innerText = `$${m.money}`;
         document.getElementById('stat-rep').innerText   = `${m.reputation}%`;
@@ -924,10 +954,10 @@ function runClientTimer(endTime) {
 
 function listenInternalVotes() {
     if (internalVotesListenerActive) {
-        db.ref(`game_room/votes/ronda_${globalGameState.round}`).off();
+        db.ref(`votes/ronda_${globalGameState.round}`).off();
     }
     internalVotesListenerActive = true;
-    db.ref(`game_room/votes/ronda_${globalGameState.round}`).on('value', s => {
+    db.ref(`votes/ronda_${globalGameState.round}`).on('value', s => {
         const vObj = s.val()||{};
         const listUi = document.getElementById('internal-votes-list'); if (!listUi) return;
         listUi.innerHTML = Object.values(vObj)
@@ -943,7 +973,7 @@ function listenInternalVotes() {
 function listenMafiaChat() {
     if (chatListenerRef) chatListenerRef.off();
     const box = document.getElementById('mafia-chat-messages'); box.innerHTML = "";
-    chatListenerRef = db.ref(`game_room/chats/${myMafiaId}/ronda_${globalGameState.round}`);
+    chatListenerRef = db.ref(`chats/${myMafiaId}/ronda_${globalGameState.round}`);
     chatListenerRef.on('child_added', s => {
         const m = s.val(); if (!m) return;
         const color = m.playerId === myPlayerId ? 'var(--neon-cyan)' : 'var(--neon-pink)';
@@ -955,7 +985,7 @@ function listenMafiaChat() {
 function sendMafiaChatMessage() {
     const i = document.getElementById('mafia-chat-input');
     const t = i.value.trim(); if (!t || !myMafiaId) return;
-    db.ref(`game_room/chats/${myMafiaId}/ronda_${globalGameState.round}`).push({
+    db.ref(`chats/${myMafiaId}/ronda_${globalGameState.round}`).push({
         playerId: myPlayerId, sender: myPlayerName, text: escapeHTML(t)
     });
     i.value = ""; try { SoundEffects.play('click'); } catch(e){}
@@ -964,7 +994,7 @@ function sendMafiaChatMessage() {
 function listenGlobalLeaderChat() {
     if (globalLeaderListenerRef) globalLeaderListenerRef.off();
     const box = document.getElementById('global-leader-messages'); box.innerHTML = "";
-    globalLeaderListenerRef = db.ref(`game_room/global_leader_chat/ronda_${globalGameState.round}`);
+    globalLeaderListenerRef = db.ref(`global_leader_chat/ronda_${globalGameState.round}`);
     globalLeaderListenerRef.on('child_added', s => {
         const m = s.val(); if (!m) return;
         const name = m.playerId === myPlayerId ? `Tú (${escapeHTML(m.mafiaName)})` : `${escapeHTML(m.mafiaName)} [${escapeHTML(m.sender)}]`;
@@ -976,7 +1006,7 @@ function listenGlobalLeaderChat() {
 function sendGlobalLeaderMessage() {
     const i = document.getElementById('global-leader-input');
     const t = i.value.trim(); if (!t || !myMafiaId) return;
-    db.ref(`game_room/global_leader_chat/ronda_${globalGameState.round}`).push({
+    db.ref(`global_leader_chat/ronda_${globalGameState.round}`).push({
         playerId: myPlayerId, sender: myPlayerName,
         mafiaId: myMafiaId, mafiaName: myMafiaName, text: escapeHTML(t)
     });
@@ -1017,36 +1047,73 @@ function renderEndScreen() {
 // ==========================================
 function masterActionStartGame() {
     try { SoundEffects.play('click'); } catch(e){}
-    db.ref('game_room/mafias').remove().then(() => {
-        return db.ref('game_room/players').once('value');
-    }).then(s => {
-        const pObj = s.val();
-        if (!pObj) { alert("Sin jugadores en el callejón."); return; }
-        const playerEntries = Object.entries(pObj).filter(([_, p]) => !p.isHost && p.online !== false);
-        if (playerEntries.length === 0) { alert("Solo hay administradores o jugadores desconectados."); return; }
-        const TOTAL_SINDICATOS = 4;
-        const nombresSindicatos = { 1:"Sindicato Alfa 🦆", 2:"Sindicato Beta 🦆", 3:"Sindicato Gamma 🦆", 4:"Sindicato Delta 🦆" };
-        const config = {}, upd = {};
-        for (let m = 1; m <= TOTAL_SINDICATOS; m++) {
-            config[`mafia_${m}`] = { id:`mafia_${m}`, name:nombresSindicatos[m], money:1200, reputation:100, influence:50, leaderId:"" };
-        }
-        playerEntries.forEach(([pId], i) => {
-            const mId = `mafia_${(i % TOTAL_SINDICATOS) + 1}`;
-            upd[`players/${pId}/mafiaId`] = mId;
-            if (!config[mId].leaderId) config[mId].leaderId = pId;
+    
+    // 1. Limpiamos primero el nodo de mafias viejo en Firebase para evitar conflictos de datos
+    db.ref('mafias').remove(() => {
+        
+        db.ref('players').once('value', s => {
+            const pObj = s.val(); 
+            if (!pObj) return alert("Sin jugadores en el callejón.");
+            
+            // Filter out admin players (isHost === true) y jugadores desconectados (online === false)
+            const playerEntries = Object.entries(pObj).filter(([_, p]) => !p.isHost && p.online !== false);
+            if (playerEntries.length === 0) return alert("Solo hay administradores o jugadores desconectados. Necesitas al menos un jugador conectado.");
+
+            const TOTAL_SINDICATOS = 4;
+
+            // Nombres base iniciales
+            const nombresSindicatos = {
+                1: "Sindicato Alfa 🦆",
+                2: "Sindicato Beta 🦆",
+                3: "Sindicato Gamma 🦆",
+                4: "Sindicato Delta 🦆"
+            };
+
+            const config = {};
+            const upd = {};
+
+            // 2. Creamos la estructura limpia para los 4 sindicatos
+            for (let m = 1; m <= TOTAL_SINDICATOS; m++) {
+                config[`mafia_${m}`] = { 
+                    id: `mafia_${m}`, 
+                    name: nombresSindicatos[m], 
+                    money: 1200, 
+                    reputation: 100, 
+                    influence: 50, 
+                    leaderId: "" 
+                };
+            }
+
+            // 3. Distribuimos los jugadores de forma equitativa
+            playerEntries.forEach(([pId, p], i) => {
+                const mId = `mafia_${(i % TOTAL_SINDICATOS) + 1}`;
+                upd[`players/${pId}/mafiaId`] = mId;
+
+                // Si el sindicato no tiene líder asignado aún, este jugador se convierte en el Jefe
+                if (!config[mId].leaderId) {
+                    config[mId].leaderId = pId;
+                }
+            });
+
+            // 4. Subimos la nueva configuración unificada a Firebase
+            upd['mafias'] = config; 
+            upd['currentPhase'] = 'ASSIGNMENT'; 
+            upd['round'] = 1;
+            
+            db.ref('').update(upd, (error) => {
+                if (error) {
+                    console.error("Error al iniciar el juego:", error);
+                } else {
+                    console.log("¡Partida de 4 sindicatos iniciada con éxito!");
+                }
+            });
         });
-        upd['mafias'] = config;
-        upd['currentPhase'] = 'ASSIGNMENT';
-        upd['round'] = 1;
-        return db.ref('game_room').update(upd);
-    }).then(() => {
-        console.log("¡Partida de 4 sindicatos iniciada con éxito!");
-    }).catch(err => console.error("Error al iniciar el juego:", err));
+    });
 }
 
 function masterLaunchRound() {
     try { SoundEffects.play('click'); } catch(e){}
-    db.ref('game_room').update({
+    db.ref('').update({
         timerEndTime: Date.now() + 180000,
         currentEvent: EVENTOS[Math.floor(Math.random()*EVENTOS.length)],
         currentPhase: 'DASHBOARD'
@@ -1057,7 +1124,7 @@ function masterActionNextRound() {
     try { SoundEffects.play('click'); } catch(e){}
     const n = (globalGameState.round||1)+1;
     if (n>5) return masterEndGameNow();
-    db.ref('game_room').update({
+    db.ref('').update({
         round:n, timerEndTime:Date.now()+180000,
         currentEvent: EVENTOS[Math.floor(Math.random()*EVENTOS.length)],
         currentPhase: 'DASHBOARD'
@@ -1066,31 +1133,29 @@ function masterActionNextRound() {
 
 function masterEndGameNow() {
     try { SoundEffects.play('click'); } catch(e){}
-    db.ref('game_room').once('value', s => {
+    db.ref('').once('value', s => {
         if (s.val()?.currentPhase==='DASHBOARD') resolveRoundLogic(true);
-        else db.ref('game_room').update({ currentPhase:'END' });
+        else db.ref('').update({ currentPhase:'END' });
     });
 }
 
 function masterResetDatabase() {
     try { SoundEffects.play('click'); } catch(e){}
-    fetch(window.MAFIA_BACKEND_URL + '/reset', { method: 'POST' })
+    if (!currentRoomCode) return alert("No hay sala activa.");
+    fetch(window.MAFIA_BACKEND_URL + '/room/' + currentRoomCode + '/reset', { method: 'POST' })
         .then(r => r.json())
         .then(() => {
-            // El servidor ya notificó a todos los clientes con currentPhase:'LOGIN'.
-            // Solo reseteamos estado local del admin; el listener global se encarga
-            // de llevar a todos (incluido el admin) a la pantalla de login.
             myPlayerId = null; myPlayerName = ""; myMafiaId = null;
             myMafiaName = ""; isHost = false; lastProcessedPhaseKey = "";
-            if (timerInterval) clearInterval(timerInterval);
-            if (chatListenerRef) chatListenerRef.off();
-            if (globalLeaderListenerRef) globalLeaderListenerRef.off();
-            if (adminSpyChatRef) adminSpyChatRef.off();
-            if (adminSpyGlobalRef) adminSpyGlobalRef.off();
             globalGameState = {};
+            if (timerInterval) clearInterval(timerInterval);
+            if (chatListenerRef) { chatListenerRef.off(); chatListenerRef = null; }
+            if (globalLeaderListenerRef) { globalLeaderListenerRef.off(); globalLeaderListenerRef = null; }
+            if (adminSpyChatRef) { adminSpyChatRef.off(); adminSpyChatRef = null; }
+            if (adminSpyGlobalRef) { adminSpyGlobalRef.off(); adminSpyGlobalRef = null; }
             returnToLoginScreen();
         })
-        .catch(err => console.error("Error al limpiar BD:", err));
+        .catch(err => console.error("Error al limpiar sala:", err));
 }
 
 function masterResetEverything() {
@@ -1102,7 +1167,7 @@ function masterResetEverything() {
     if (adminSpyGlobalRef) adminSpyGlobalRef.off();
 
     // Preserve players while resetting game state
-    db.ref('game_room/players').once('value').then(playersSnapshot => {
+    db.ref('players').once('value', playersSnapshot => {
         const players = playersSnapshot.val() || {};
         const updates = {
             currentPhase: 'LOGIN',
@@ -1123,14 +1188,15 @@ function masterResetEverything() {
             // Preserve other player fields like name, isHost, online
         });
 
-        db.ref('game_room').update(updates).then(() => {
+        db.ref('').update(updates).then(() => {
+            // Instead of reloading, return to login screen to keep player connections intact
             returnToLoginScreen();
         });
     });
 }
 
 function resolveRoundLogic(goToEnd=false) {
-    db.ref('game_room').once('value', s => {
+    db.ref('').once('value', s => {
         const game = s.val(); if (!game?.mafias) return;
         const rV = game.votes?.[`ronda_${game.round}`];
         const mafias = game.mafias;
@@ -1193,6 +1259,6 @@ function resolveRoundLogic(goToEnd=false) {
             });
         }
 
-        db.ref('game_room').update({ mafias, lastRoundLogs:logs, estadisticasHistoricas:st, currentPhase: goToEnd?'END':'TRANSITION' });
+        db.ref('').update({ mafias, lastRoundLogs:logs, estadisticasHistoricas:st, currentPhase: goToEnd?'END':'TRANSITION' });
     });
 }
