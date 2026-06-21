@@ -23,6 +23,7 @@ let isHost             = false;
 let globalGameState    = {};
 let timerInterval      = null;
 let lastProcessedPhaseKey = "";
+let joiningNow = false; // true entre el login y el primer snapshot real recibido; ver listenToGlobalState()
 let mafiaNameListenerActive = false;
 let internalVotesListenerActive = false;
 
@@ -333,23 +334,30 @@ function setupLogin() {
     const doJoin = (code) => {
         const db2 = firebase.database();
         db2.joinRoom(code).then(() => {
-            // Ahora que estamos en la sala, activamos el listener global
-            listenToGlobalState();
             const pRef = db.ref('players').push();
             myPlayerId = pRef.key;
+
+            // 'joiningNow' le indica a listenToGlobalState() que el PRIMER
+            // snapshot que reciba para este jugador debe forzar siempre un
+            // syncGamePhase(), sin importar qué traiga 'lastProcessedPhaseKey'
+            // de una sesión anterior. Antes, el código fijaba
+            // 'lastProcessedPhaseKey' leyendo 'globalGameState' de forma
+            // SÍNCRONA justo después de llamar a listenToGlobalState(), pero
+            // el primer snapshot real tarda en llegar por la red (es
+            // asíncrono) — en ese instante 'globalGameState' aún tenía su
+            // valor inicial (objeto vacío), así que el código asumía 'LOGIN'
+            // sin importar la fase real del juego. Funcionaba por
+            // casualidad cuando todos entraban antes de iniciar la partida;
+            // un jugador que entra tarde (juego ya en ASSIGNMENT/DASHBOARD)
+            // podía quedar con la pantalla equivocada. Esta bandera se
+            // consume en el primer snapshot real, dentro del propio
+            // listener, evitando cualquier carrera entre dos fuentes async.
+            joiningNow = true;
+            listenToGlobalState();
+
             pRef.set({ name: myPlayerName, mafiaId: "sin_asignar", online: true, isHost }).then(() => {
                 playerRegistered = true;
             });
-    // Marcamos que ya "procesamos" la fase actual para que el snapshot inicial
-    // (o cualquier snapshot disparado por OTRO jugador entrando justo después) no se
-    // interprete como un cambio de fase que deba resetear nuestra pantalla. Sin esto,
-    // 'lastProcessedPhaseKey' quedaba en "" durante todo el tutorial, y cualquier
-    // jugador nuevo entrando (push a 'players') disparaba el listener global en TODOS
-    // los clientes, haciendo que cualquiera que siguiera en el tutorial fuera
-    // expulsado de vuelta a la pantalla de login.
-            const curPhase = globalGameState.currentPhase || 'LOGIN';
-            const curRound = globalGameState.round || 0;
-            lastProcessedPhaseKey = `${curPhase}_${curRound}`;
     // IMPORTANTE: NO usamos .remove() aquí. Con 5+ dispositivos en la misma red WiFi
     // de salón, es normal que el router sature su tabla NAT y cierre/recicle sockets
     // brevemente (1-3 segundos) cuando entran conexiones nuevas. Firebase interpreta
@@ -477,7 +485,15 @@ function listenToGlobalState() {
         // de este cliente. Si actuáramos sobre ese snapshot directamente, expulsaríamos
         // jugadores reales por error. Por eso, antes de expulsar, confirmamos con una
         // lectura directa (once) de nuestro propio nodo.
-        if (myPlayerId && !isHost && playerRegistered && data.players && !data.players[myPlayerId]) {
+        // 'joiningNow' excluye explícitamente esta ventana: mientras es true, sabemos con
+        // certeza que ESTE cliente se está registrando ahora mismo, así que un snapshot sin
+        // su propio nodo es simplemente el snapshot del propio login aún no reflejado, no
+        // una expulsión real. Sin esta exclusión, esa primera lectura (que casi siempre llega
+        // así) disparaba el guard en cada login, agregando una verificación de red innecesaria
+        // -y, peor, una ventana real donde un jugador podía ser devuelto a LOGIN por error si
+        // el once() de verificación tardaba en resolver y mientras tanto se procesaba otro
+        // evento que cambiara myPlayerId.
+        if (myPlayerId && !isHost && !joiningNow && playerRegistered && data.players && !data.players[myPlayerId]) {
             const idToCheck = myPlayerId;
             db.ref(`players/${idToCheck}`).once('value').then(soloSnap => {
                 if (soloSnap.exists()) return; // Falso positivo: mi nodo sí existe, fue un snapshot incompleto/desfasado
@@ -489,6 +505,22 @@ function listenToGlobalState() {
                 if (globalLeaderListenerRef) globalLeaderListenerRef.off();
                 returnToLoginScreen();
             });
+            return;
+        }
+
+        // Si acabamos de entrar (login en curso), el PRIMER snapshot real que
+        // llegue aquí decide la fase sin importar lo que diga
+        // 'lastProcessedPhaseKey' de antes. Esto reemplaza la lectura síncrona
+        // que había justo después de login(): esa lectura ocurría antes de que
+        // este snapshot llegara por la red, así que siempre asumía 'LOGIN'
+        // sin importar la fase real (un jugador entrando tarde, con el juego
+        // ya en ASSIGNMENT o más adelante, podía quedar con la pantalla
+        // equivocada). Al decidir aquí, con el snapshot real en mano, el
+        // jugador siempre ve la fase correcta exista o no una sesión previa.
+        if (joiningNow) {
+            joiningNow = false;
+            lastProcessedPhaseKey = phaseKey;
+            syncGamePhase(phase);
             return;
         }
 
