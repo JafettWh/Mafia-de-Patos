@@ -85,6 +85,36 @@ const ACTION_ICONS  = { cooperar:'🤝', traicionar:'🗡️', robar:'🥷', ali
 // ==========================================
 // CAMBIO DE PANTALLA (Bypass de Estilos Forzado)
 // ==========================================
+let assignmentStatusInterval = null;
+const ASSIGNMENT_STATUS_MESSAGES = [
+    "Esperando la llamada del Don...",
+    "El Don está repasando los planes...",
+    "Los sindicatos toman posición...",
+    "La ciudad contiene la respiración...",
+    "Cualquier segundo puede sonar el teléfono..."
+];
+
+function startAssignmentStatusRotation() {
+    const el = document.getElementById('assignment-status-text');
+    if (!el) return;
+    let i = 0;
+    el.innerText = ASSIGNMENT_STATUS_MESSAGES[0];
+    clearInterval(assignmentStatusInterval);
+    assignmentStatusInterval = setInterval(() => {
+        i = (i + 1) % ASSIGNMENT_STATUS_MESSAGES.length;
+        el.style.opacity = '0';
+        setTimeout(() => {
+            el.innerText = ASSIGNMENT_STATUS_MESSAGES[i];
+            el.style.opacity = '1';
+        }, 250);
+    }, 3200);
+}
+
+function stopAssignmentStatusRotation() {
+    clearInterval(assignmentStatusInterval);
+    assignmentStatusInterval = null;
+}
+
 function changeScreen(id) {
     if (isHost && id !== 'screen-login') return;
     
@@ -100,6 +130,12 @@ function changeScreen(id) {
             s.style.setProperty('display', 'none', 'important');  
         }
     });
+
+    if (id === 'screen-assignment') {
+        startAssignmentStatusRotation();
+    } else {
+        stopAssignmentStatusRotation();
+    }
 }
 
 // ==========================================

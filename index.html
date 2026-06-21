@@ -210,8 +210,9 @@
     </div>
 
     <div id="screen-assignment" class="screen hidden text-center">
-        <div class="card border-neon">
-            <h2>Fuiste asignado a:</h2>
+        <div class="card border-neon assignment-card">
+            <p class="assignment-eyebrow">SINDICATO CONFIRMADO</p>
+            <h2 class="assignment-subtitle">Fuiste asignado a:</h2>
             <h1 id="assigned-mafia-name" class="text-neon-cyan mt-1 assigned-mafia-name">...</h1>
             <p id="assigned-player-role" class="mt-1 font-bold text-neon-yellow">...</p>
             <div id="naming-box" class="mt-2 hidden">
@@ -219,7 +220,18 @@
                 <input type="text" id="custom-mafia-name" placeholder="Ej: Los Soprano" maxlength="20">
                 <button id="btn-save-mafia-name" class="btn-success mt-1">Guardar Nombre</button>
             </div>
-            <p class="mt-2 text-muted animate-pulse">Esperando que el Don inicie la ronda...</p>
+
+            <div class="redphone-scene mt-2" aria-hidden="true">
+                <div class="redphone-rings">
+                    <span class="redphone-ring"></span>
+                    <span class="redphone-ring"></span>
+                    <span class="redphone-ring"></span>
+                </div>
+                <div class="redphone-icon">☎️</div>
+            </div>
+
+            <p id="assignment-status-text" class="mt-2 font-bold text-neon-pink assignment-status-text">Esperando la llamada del Don...</p>
+            <p class="text-sm text-muted mt-1">La ronda empieza en cuanto el Don dé la orden. No cierres esta pantalla.</p>
         </div>
     </div>
 

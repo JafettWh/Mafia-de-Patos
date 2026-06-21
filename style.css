@@ -349,6 +349,106 @@ button:hover  { filter: brightness(1.1); }
 }
 
 /* ==========================================
+   PANTALLA DE ESPERA — "LLAMADA DEL DON"
+   (screen-assignment: tras asignar sindicato,
+   mientras el Don decide iniciar la ronda)
+========================================== */
+.assignment-card {
+    padding: 22px 18px 26px;
+    overflow: hidden;
+}
+
+.assignment-eyebrow {
+    font-size: 0.68rem;
+    font-weight: bold;
+    letter-spacing: 0.18em;
+    color: var(--success);
+    margin-bottom: 4px;
+}
+
+.assignment-subtitle {
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-weight: normal;
+}
+
+.assigned-mafia-name {
+    font-size: 1.7rem;
+    line-height: 1.25;
+    word-break: break-word;
+}
+
+.assignment-status-text {
+    font-size: 0.95rem;
+    min-height: 1.4em;
+    transition: opacity 0.25s ease;
+}
+
+/* Escena del teléfono rojo: anillos de radar expandiéndose
+   alrededor de un auricular, como si estuviera timbrando en
+   silencio a la espera de que el Don tome la llamada. */
+.redphone-scene {
+    position: relative;
+    width: 130px;
+    height: 130px;
+    margin: 18px auto 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.redphone-rings {
+    position: absolute;
+    inset: 0;
+}
+
+.redphone-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid var(--neon-pink);
+    opacity: 0;
+    animation: redphone-pulse 2.4s ease-out infinite;
+}
+.redphone-ring:nth-child(2) { animation-delay: 0.8s; }
+.redphone-ring:nth-child(3) { animation-delay: 1.6s; }
+
+@keyframes redphone-pulse {
+    0%   { transform: scale(0.35); opacity: 0.9; border-color: var(--neon-pink); }
+    70%  { opacity: 0.25; }
+    100% { transform: scale(1); opacity: 0; border-color: var(--neon-yellow); }
+}
+
+.redphone-icon {
+    position: relative;
+    z-index: 1;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ff3366, #7a0026);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    box-shadow: 0 0 18px rgba(255,0,85,0.55), inset 0 0 10px rgba(0,0,0,0.35);
+    animation: redphone-shake 2.4s ease-in-out infinite;
+}
+
+@keyframes redphone-shake {
+    0%, 65%, 100% { transform: rotate(0deg); }
+    68% { transform: rotate(-8deg); }
+    71% { transform: rotate(7deg); }
+    74% { transform: rotate(-6deg); }
+    77% { transform: rotate(4deg); }
+    80% { transform: rotate(0deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .redphone-ring, .redphone-icon { animation: none; }
+    .redphone-ring { opacity: 0.35; transform: scale(0.7); }
+}
+
+/* ==========================================
    RESPONSIVE MÓVIL
 ========================================== */
 @media (max-width: 400px) {
@@ -361,4 +461,8 @@ button:hover  { filter: brightness(1.1); }
     .data-table th,
     .data-table td { font-size: 0.75rem; padding: 5px 3px; }
     .btn-action { padding: 12px 6px; font-size: 12px; }
+    .assigned-mafia-name { font-size: 1.4rem; }
+    .redphone-scene { width: 104px; height: 104px; margin: 14px auto 2px; }
+    .redphone-icon { width: 54px; height: 54px; font-size: 25px; }
 }
+
