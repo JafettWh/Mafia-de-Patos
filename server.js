@@ -351,10 +351,41 @@ io.on("connection", (socket) => {
         const room = getRoom(); if (!room) return;
         try {
             const base = normalize(path);
+            // Aplicamos TODAS las escrituras primero, sin notificar todavía.
+            // Antes, cada key del 'updates' disparaba su propio notifyChange()
+            // de inmediato — y como cada notifyChange recorre TODOS los
+            // suscriptores de la raíz reserializando el estado completo de la
+            // sala, un solo update con varias keys a la vez (como
+            // masterActionNextRound: round+timerEndTime+currentEvent+
+            // currentPhase, 4 keys) generaba 4 serializaciones completas +
+            // 4 rondas de emits a cada jugador conectado, en vez de 1. Con
+            // pocos jugadores era imperceptible; con 8-30 jugadores
+            // conectados, ese trabajo síncrono en cadena (sin ceder el
+            // event loop entre keys) bloqueaba el hilo del servidor el
+            // tiempo suficiente para sentirse como varios segundos de delay
+            // en CUALQUIER acción del admin que actualizara más de una key
+            // a la vez.
+            const changedPaths = [];
             Object.keys(updates).forEach(key => {
                 const full = base ? `${base}/${key}` : key;
                 fullSetAtPath(room.state, full, resolveServerValues(updates[key]));
-                notifyChange(room, full);
+                changedPaths.push(full);
+            });
+            // Notificamos una sola vez por PATH ÚNICO afectado. Si dos keys
+            // del mismo update apuntan a paths distintos pero ambos son
+            // descendientes de la misma ruta suscrita (ej. la raíz ""), esa
+            // ruta de todas formas solo necesita UNA notificación porque ya
+            // refleja el estado más reciente tras aplicar todos los cambios.
+            const notifiedSubPaths = new Set();
+            changedPaths.forEach(full => {
+                for (const [subPath, sockets] of room.valueSubs.entries()) {
+                    if (notifiedSubPaths.has(subPath)) continue;
+                    if (!pathsRelated(subPath, full)) continue;
+                    notifiedSubPaths.add(subPath);
+                    const val = getAtPath(room.state, subPath);
+                    const payload = { path: subPath, data: val === undefined ? null : val };
+                    sockets.forEach(sock => sock.emit("value", payload));
+                }
             });
             schedulePersist(socket.data.roomCode);
             ack && ack({ ok: true });
