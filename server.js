@@ -199,7 +199,8 @@ app.get("/admin/clear-rooms", async (req, res) => {
     }
     try {
         const [result] = await pool.execute("DELETE FROM rooms");
-        rooms.clear(); // También limpia el caché en memoria del servidor
+        // Limpiar el caché en memoria según la estructura real del servidor
+        Object.keys(rooms).forEach(k => delete rooms[k]);
         console.log(`[ADMIN] Salas borradas: ${result.affectedRows}`);
         res.json({ ok: true, borradas: result.affectedRows });
     } catch (err) {
