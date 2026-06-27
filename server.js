@@ -189,6 +189,24 @@ app.use(cors({ origin: ALLOWED_ORIGINS.includes("*") ? true : ALLOWED_ORIGINS })
 
 app.get("/", (_req, res) => res.send("Mafia de Patos backend OK"));
 
+// Endpoint de mantenimiento: borra todas las salas acumuladas en MySQL.
+// Protegido con una clave simple en la URL para que solo el admin lo use.
+// Uso: GET /admin/clear-rooms?key=mafia2025
+// Después de ejecutarlo puedes quitar este endpoint si quieres.
+app.get("/admin/clear-rooms", async (req, res) => {
+    if (req.query.key !== "mafia2025") {
+        return res.status(403).json({ error: "Clave incorrecta." });
+    }
+    try {
+        const [result] = await pool.execute("DELETE FROM rooms");
+        rooms.clear(); // También limpia el caché en memoria del servidor
+        console.log(`[ADMIN] Salas borradas: ${result.affectedRows}`);
+        res.json({ ok: true, borradas: result.affectedRows });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get("/healthz", (_req, res) => {
     const roomList = Object.entries(rooms).map(([code, r]) => ({
         code,
